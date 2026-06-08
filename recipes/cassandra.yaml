@@ -1,0 +1,25 @@
+source:
+    type: cassandra
+    config:
+        contact_point: ebc-cassandra
+        port: 9042
+        username: cassandra
+        password: cassandra
+        keyspace_pattern:
+            allow:
+                - '.*'
+        table_pattern:
+            allow:
+                - '.*'
+        stateful_ingestion:
+            enabled: true
+            state_provider:
+                type: datahub
+                config:
+                    datahub_api: {server: 'http://datahub-gms:8080'}
+sink:
+    type: datahub-rest
+    config:
+        server: 'http://datahub-gms:8080'
+
+pipeline_name: ebc_cassandra_ingestion

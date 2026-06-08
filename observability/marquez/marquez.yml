@@ -1,0 +1,37 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 5000
+  adminConnectors:
+    - type: http
+      port: 5001
+  requestLog:
+    appenders:
+      - type: console
+        target: stderr
+
+db:
+  driverClass: org.postgresql.Driver
+  url: jdbc:postgresql://marquez-db:5432/marquez
+  user: marquez
+  password: marquez
+  properties:
+    charSet: UTF-8
+  maxWaitForConnection: 1s
+  validationQuery: "/* Marquez Health Check */ SELECT 1"
+  validationQueryTimeout: 3 seconds
+  minSize: 2
+  maxSize: 8
+  initializationQuery: "SET time zone 'UTC'"
+
+migrateOnStartup: true
+
+logging:
+  level: INFO
+  loggers:
+    marquez: INFO
+    io.marquez: INFO
+  appenders:
+    - type: console
+      threshold: INFO
+      target: stdout

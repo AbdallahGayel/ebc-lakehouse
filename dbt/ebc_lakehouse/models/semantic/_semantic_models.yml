@@ -1,0 +1,195 @@
+version: 2
+
+# =============================================================================
+# EBC Lakehouse — dbt Semantic Layer (MetricFlow)
+# Semantic models map Gold mart tables to queryable business entities.
+# Each model defines: primary entity (join key), time dimensions,
+# categorical dimensions, and measures used to build metrics.
+# =============================================================================
+
+semantic_models:
+
+  # ── 1. Daily Transaction Volume ───────────────────────────────────────────
+  # Source: gold.mart_daily_txn_volume
+  # Grain: one row per (report_date, scheme)
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: transactions_daily
+    description: >
+      Daily payment transaction volume and monetary value aggregated by EBC
+      payment scheme (EG-ACH, MEEZA, IPN-INSTAPAY, MEEZA-DIGITAL, 123-ATM-NETWORK).
+      Primary source for volume, approval-rate, and revenue metrics.
+    model: ref('mart_daily_txn_volume')
+    defaults:
+      agg_time_dimension: report_date
+
+    entities:
+      - name: txn_day_scheme
+        type: primary
+        expr: "concat(toString(report_date), '||', scheme)"
+
+    dimensions:
+      - name: report_date
+        type: time
+        description: "Calendar date of the aggregated transactions"
+        type_params:
+          time_granularity: day
+
+      - name: scheme
+        type: categorical
+        description: >
+          EBC payment rail identifier:
+          EG-ACH | MEEZA | IPN-INSTAPAY | MEEZA-DIGITAL | 123-ATM-NETWORK
+
+    measures:
+      - name: transaction_count
+        description: "Total number of payment transactions"
+        agg: sum
+        expr: txn_count
+        agg_time_dimension: report_date
+
+      - name: total_amount_egp
+        description: "Total payment value in Egyptian Pounds"
+        agg: sum
+        expr: total_amount_egp
+        agg_time_dimension: report_date
+
+      - name: approved_transaction_count
+        description: "Count of approved / successfully completed transactions"
+        agg: sum
+        expr: approved_count
+        agg_time_dimension: report_date
+
+      - name: failed_transaction_count
+        description: "Count of failed / rejected / declined transactions"
+        agg: sum
+        expr: failed_count
+        agg_time_dimension: report_date
+
+
+  # ── 2. Scheme & Channel Performance ──────────────────────────────────────
+  # Source: gold.mart_scheme_performance
+  # Grain: one row per (report_date, scheme, channel)
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: scheme_performance_daily
+    description: >
+      Daily per-scheme, per-channel transaction volumes, approval rates, and
+      processing latency. Supports IPN SLA compliance and Meeza channel-mix analysis.
+    model: ref('mart_scheme_performance')
+    defaults:
+      agg_time_dimension: report_date
+
+    entities:
+      - name: perf_day_scheme_channel
+        type: primary
+        expr: "concat(toString(report_date), '||', scheme, '||', channel)"
+
+    dimensions:
+      - name: report_date
+        type: time
+        description: "Calendar date of the performance measurements"
+        type_params:
+          time_granularity: day
+
+      - name: scheme
+        type: categorical
+        description: "Payment scheme identifier"
+
+      - name: channel
+        type: categorical
+        description: >
+          Transaction channel: POS | ECOMMERCE | ATM | CONTACTLESS |
+          ATM_TERMINAL | MOBILE | INTERNET
+
+    measures:
+      - name: scheme_channel_txn_volume
+        description: "Transaction volume broken down by scheme and channel"
+        agg: sum
+        expr: txn_volume
+        agg_time_dimension: report_date
+
+      - name: weighted_approval_rate_pct
+        description: "Volume-weighted average approval rate percentage"
+        agg: average
+        expr: approval_rate_pct
+        agg_time_dimension: report_date
+
+      - name: avg_processing_latency_ms
+        description: "Average transaction processing time in milliseconds"
+        agg: average
+        expr: avg_processing_ms
+        agg_time_dimension: report_date
+
+
+  # ── 3. Inter-Bank Settlement ──────────────────────────────────────────────
+  # Source: gold.mart_settlement_summary
+  # Grain: one row per (settlement_date, originating_bank_id, receiving_bank_id)
+  # ─────────────────────────────────────────────────────────────────────────
+  - name: settlement_daily
+    description: >
+      Daily net settlement positions between EBC member banks for EG-ACH
+      transactions. Used for CBE regulatory reporting and settlement-rate SLA tracking.
+    model: ref('mart_settlement_summary')
+    defaults:
+      agg_time_dimension: settlement_date
+
+    entities:
+      - name: settlement_day_bank_pair
+        type: primary
+        expr: >
+          concat(
+            toString(settlement_date), '||',
+            toString(originating_bank_id), '||',
+            toString(receiving_bank_id)
+          )
+
+    dimensions:
+      - name: settlement_date
+        type: time
+        description: "Calendar date of the settlement cycle"
+        type_params:
+          time_granularity: day
+
+      - name: originating_bank_id
+        type: categorical
+        description: "Member bank ID initiating the debit / credit instruction"
+
+      - name: receiving_bank_id
+        type: categorical
+        description: "Member bank ID receiving the credit / debit instruction"
+
+    measures:
+      - name: settled_transaction_count
+        description: "Count of successfully settled ACH transactions"
+        agg: sum
+        expr: settled_count
+        agg_time_dimension: settlement_date
+
+      - name: failed_settlement_count
+        description: "Count of ACH transactions that failed to settle"
+        agg: sum
+        expr: failed_count
+        agg_time_dimension: settlement_date
+
+      - name: returned_transaction_count
+        description: "Count of returned / reversed ACH transactions"
+        agg: sum
+        expr: returned_count
+        agg_time_dimension: settlement_date
+
+      - name: net_settlement_amount_egp
+        description: "Net monetary value of settled transactions in EGP"
+        agg: sum
+        expr: net_settled_egp
+        agg_time_dimension: settlement_date
+
+      - name: failed_settlement_amount_egp
+        description: "Monetary value of failed settlements in EGP"
+        agg: sum
+        expr: failed_amount_egp
+        agg_time_dimension: settlement_date
+
+      - name: total_attempted_settlements
+        description: "Total attempted settlements: settled + failed + returned"
+        agg: sum
+        expr: "settled_count + failed_count + returned_count"
+        agg_time_dimension: settlement_date

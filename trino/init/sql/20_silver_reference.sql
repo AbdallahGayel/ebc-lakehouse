@@ -1,0 +1,26 @@
+-- =============================================================================
+-- 20_silver_reference.sql
+--
+-- Silver tables are owned by dbt-trino. The init script does NOT pre-create
+-- them because dbt's merge incremental strategy requires the writer to own
+-- the schema (so it can evolve columns on +on_schema_change).
+--
+-- The shape below documents what dbt will produce on first `dbt run --select
+-- silver.*`. Use this as a reference when wiring new BI tools or downstream
+-- consumers.
+--
+-- Storage:     s3://ebc-lakehouse/silver/<table>/
+-- Format:      PARQUET (format_version=2)
+-- Partition:   inherits from Bronze key
+-- Materialise: dbt incremental_strategy='merge' on <unique_key>
+-- Audit cols:  cdc_operation, cdc_event_ts_ms, _silver_loaded_at
+--
+-- Tables produced (Trino FQNs):
+--   iceberg.silver.stg_ach_transactions       unique_key=txn_id
+--   iceberg.silver.stg_meeza_authorisations   unique_key=auth_id
+--   iceberg.silver.stg_ipn_transactions       unique_key=txn_id
+--   iceberg.silver.stg_meeza_digital_wallet   unique_key=document_id
+--   iceberg.silver.stg_atm_sessions           unique_key=(atm_id, session_id)
+--
+-- ── No-op marker ─────────────────────────────────────────────────────────
+SELECT 'silver ownership = dbt (no DDL emitted)' AS status;

@@ -1,0 +1,61 @@
+# =============================================================================
+# recipes/iceberg.yaml
+# DataHub ingestion: Apache Polaris (Iceberg REST) → DataHub metadata catalog
+#
+# Crawls every medallion namespace (Bronze / Silver / Gold / Serving) inside
+# the `ebc_lakehouse` Polaris catalog, extracts schemas, partition specs,
+# snapshot history, and column-level lineage, and pushes them into DataHub GMS.
+#
+# Run:
+#   datahub ingest -c recipes/iceberg.yaml
+# =============================================================================
+source:
+    type: iceberg
+    config:
+        processing_threads: 4
+
+        catalog:
+            ebc_polaris:
+                type:        rest
+                uri:         'http://polaris:8181/api/catalog'
+                warehouse:   'ebc_lakehouse'
+                credential:  'root:s3cr3t'
+                scope:       'PRINCIPAL_ROLE:ALL'
+                s3.endpoint:          'http://minio:9000'
+                s3.access-key-id:     minioadmin
+                s3.secret-access-key: minioadmin
+                s3.region:            us-east-1
+                s3.path-style-access: true
+
+        # Scope: all four medallion layers
+        table_pattern:
+            allow:
+                - 'bronze\..*'
+                - 'silver\..*'
+                - 'gold\..*'
+                - 'serving\..*'
+            deny: []
+
+        include_column_lineage: true
+
+        profiling:
+            enabled: true
+            profile_table_level_only: false
+
+        # Stateful ingestion persists the last-seen cursor in DataHub so that
+        # re-runs only process tables/snapshots that changed since the last run.
+        stateful_ingestion:
+            enabled: true
+            state_provider:
+                type: datahub
+                config:
+                    datahub_api:
+                        server: 'http://datahub-gms:8080'
+
+sink:
+    type: datahub-rest
+    config:
+        server: 'http://datahub-gms:8080'
+        mode: SYNC
+
+pipeline_name: ebc_polaris_iceberg_ingestion

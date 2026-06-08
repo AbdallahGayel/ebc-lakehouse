@@ -1,0 +1,11 @@
+.env
+.env.local
+kafka/plugins/*.jar
+dbt/ebc_lakehouse/target/
+dbt/ebc_lakehouse/dbt_packages/
+dbt/ebc_lakehouse/logs/
+__pycache__/
+*.pyc
+.venv/
+venv/
+create_repo.py

@@ -1,0 +1,31 @@
+source:
+    type: postgres
+    config:
+        host_port: postgres-src
+        database: ebc_sources
+        username: ebc_src
+        password: ebc_src_pass
+        database_alias: ebc-postgres-src
+        platform_instance: ebc-postgres-src
+        env: PROD
+        include_tables: true
+        include_views: true
+        include_view_lineage: false
+        profiling:
+            enabled: true
+            profile_table_level_only: false
+            include_field_null_count: true
+            include_field_distinct_count: true
+            max_number_of_fields_to_profile: 50
+        stateful_ingestion:
+            enabled: true
+            state_provider:
+                type: datahub
+                config:
+                    datahub_api: {server: 'http://datahub-gms:8080'}
+sink:
+    type: datahub-rest
+    config:
+        server: 'http://datahub-gms:8080'
+
+pipeline_name: ebc_postgres_ingestion

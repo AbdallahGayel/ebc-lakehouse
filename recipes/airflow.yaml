@@ -1,0 +1,23 @@
+# NOTE: The DataHub `airflow` source type runs INSIDE Airflow as a provider plugin,
+# not as a standalone CLI recipe. This recipe uses datahub-lineage-file instead,
+# which captures the Cassandra→Bronze ETL lineage that is orchestrated by Airflow
+# but not covered by dbt.yaml (which only covers Bronze→Silver→Gold via dbt models).
+#
+# To also get DataFlow/DataJob entities (DAG structure, task runs, scheduling),
+# install the DataHub Airflow provider inside the Airflow containers:
+#   docker exec ebc-airflow-scheduler pip install "acryl-datahub[airflow-plugin]"
+# and set AIRFLOW__DATAHUB__ENABLED=true + AIRFLOW__DATAHUB__CONN_ID=datahub_rest
+# in the airflow environment.
+
+source:
+    type: datahub-lineage-file
+    config:
+        file: recipes/airflow_lineage.yaml
+
+sink:
+    type: datahub-rest
+    config:
+        server: 'http://localhost:8082'
+        mode: SYNC
+
+pipeline_name: ebc_airflow_lineage_ingestion

@@ -1,0 +1,85 @@
+{
+  "catalogs": [
+    {
+      "user": "ebc_admin|ebc_user|root",
+      "catalog": ".*",
+      "allow": "all"
+    },
+    {
+      "user": "ebc_engineer",
+      "catalog": "iceberg|system|jmx|memory",
+      "allow": "all"
+    },
+    {
+      "user": "ebc_bi",
+      "catalog": "iceberg|system|jmx|memory",
+      "allow": "read-only"
+    },
+    {
+      "user": ".*",
+      "catalog": ".*",
+      "allow": "none"
+    }
+  ],
+
+  "schemas": [
+    { "user": "ebc_admin|ebc_user|root", "schema": ".*", "owner": true },
+
+    {
+      "user": "ebc_engineer",
+      "catalog": "iceberg",
+      "schema": "silver|gold|serving",
+      "owner": true
+    },
+    {
+      "user": "ebc_engineer",
+      "catalog": "iceberg",
+      "schema": "bronze|information_schema",
+      "owner": false
+    },
+
+    {
+      "user": "ebc_bi",
+      "catalog": "iceberg",
+      "schema": "gold|serving|information_schema",
+      "owner": false
+    }
+  ],
+
+  "tables": [
+    {
+      "user": "ebc_admin|ebc_user|root",
+      "privileges": ["SELECT","INSERT","UPDATE","DELETE","OWNERSHIP","GRANT_SELECT"]
+    },
+
+    {
+      "user": "ebc_engineer",
+      "catalog": "iceberg",
+      "schema": "bronze",
+      "privileges": ["SELECT"]
+    },
+    {
+      "user": "ebc_engineer",
+      "catalog": "iceberg",
+      "schema": "silver|gold|serving",
+      "privileges": ["SELECT","INSERT","UPDATE","DELETE","OWNERSHIP"]
+    },
+
+    {
+      "user": "ebc_bi",
+      "catalog": "iceberg",
+      "schema": "gold|serving",
+      "privileges": ["SELECT"]
+    }
+  ],
+
+  "system_information": [
+    { "user": "ebc_admin|ebc_user|root", "allow": ["read","write"] }
+  ],
+
+  "queries": [
+    { "user": "ebc_admin|ebc_user|root", "allow": ["execute","view","kill"] },
+    { "user": "ebc_engineer",            "allow": ["execute","view"] },
+    { "user": "ebc_bi",                  "allow": ["execute","view"] }
+  ]
+}

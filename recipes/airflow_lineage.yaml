@@ -1,0 +1,159 @@
+version: "1"
+# Each top-level item defines the UPSTREAM lineage for one DOWNSTREAM entity.
+# Names must match the DataHub entity name exactly (no platform or env prefix).
+lineage:
+
+  # ── Bronze: ACH Transactions (upstream: Postgres ACH) ──────────────────────
+  - entity:
+      name: ebc_lakehouse.bronze.ach_transactions
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_sources.public.ach_transactions
+          type: dataset
+          platform: postgres
+          env: PROD
+
+  # ── Bronze: IPN Transactions (upstream: Postgres IPN) ─────────────────────
+  - entity:
+      name: ebc_lakehouse.bronze.ipn_transactions
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_sources.public.ipn_transactions
+          type: dataset
+          platform: postgres
+          env: PROD
+
+  # ── Bronze: Meeza Transactions (upstream: Cassandra CDC + MongoDB + Postgres)
+  - entity:
+      name: ebc_lakehouse.bronze.meeza_transactions
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_cassandra.meeza.card_events
+          type: dataset
+          platform: cassandra
+          env: PROD
+      - entity:
+          name: ebc_cassandra.meeza.terminal_sessions
+          type: dataset
+          platform: cassandra
+          env: PROD
+      - entity:
+          name: ebc_mongodb.transactions.mobile_transfers
+          type: dataset
+          platform: mongodb
+          env: PROD
+      - entity:
+          name: ebc_sources.public.meeza_transactions
+          type: dataset
+          platform: postgres
+          env: PROD
+
+  # ── Bronze: Accounts (upstream: Postgres accounts) ────────────────────────
+  - entity:
+      name: ebc_lakehouse.bronze.accounts
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_sources.public.accounts
+          type: dataset
+          platform: postgres
+          env: PROD
+
+  # ── Silver: ACH Transactions (upstream: Bronze ACH) ──────────────────────
+  - entity:
+      name: ebc_lakehouse.silver.ach_transactions
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_lakehouse.bronze.ach_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD
+
+  # ── Silver: IPN Transactions (upstream: Bronze IPN) ──────────────────────
+  - entity:
+      name: ebc_lakehouse.silver.ipn_transactions
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_lakehouse.bronze.ipn_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD
+
+  # ── Silver: Meeza Transactions (upstream: Bronze Meeza) ──────────────────
+  - entity:
+      name: ebc_lakehouse.silver.meeza_transactions
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_lakehouse.bronze.meeza_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD
+
+  # ── Gold: Daily Payment Summary (upstream: Silver ACH + Silver Meeza) ─────
+  - entity:
+      name: ebc_lakehouse.gold.daily_payment_summary
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_lakehouse.silver.ach_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD
+      - entity:
+          name: ebc_lakehouse.silver.meeza_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD
+
+  # ── Gold: Approval Rate by Scheme (upstream: Silver ACH + Silver Meeza) ───
+  - entity:
+      name: ebc_lakehouse.gold.approval_rate_by_scheme
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_lakehouse.silver.ach_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD
+      - entity:
+          name: ebc_lakehouse.silver.meeza_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD
+
+  # ── Gold: IPN SLA Compliance (upstream: Silver IPN) ──────────────────────
+  - entity:
+      name: ebc_lakehouse.gold.ipn_sla_compliance
+      type: dataset
+      platform: iceberg
+      env: PROD
+    upstream:
+      - entity:
+          name: ebc_lakehouse.silver.ipn_transactions
+          type: dataset
+          platform: iceberg
+          env: PROD

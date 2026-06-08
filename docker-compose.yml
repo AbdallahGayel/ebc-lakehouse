@@ -1,0 +1,35 @@
+# =============================================================================
+# EBC Lakehouse — root compose
+#
+# Modularised into three composable files that share the external bridge
+# network `ebc-lakehouse-network`. Each module owns its own lifecycle and can
+# be brought up independently:
+#
+#   docker compose -f compose/docker-compose.core.yml       up -d
+#   docker compose -f compose/docker-compose.sources.yml    up -d
+#   docker compose -f compose/docker-compose.governance.yml up -d
+#
+# `docker compose up -d` from the project root brings up everything via the
+# include: directive below (requires Docker Compose ≥ 2.20).
+#
+# Startup order (enforced by scripts/init_all.sh):
+#   1. core        — Kafka (KRaft) + Schema Registry + MinIO + Polaris + Trino
+#                    + postgres-meta + Airflow + Flink (JM/TM/SQL Gateway)
+#                    + first-pass Flink job submission via flink-init.
+#                    (No Kafka Connect — every CDC source is owned by Flink.)
+#   2. sources     — postgres-src, mongodb, mssql (replaces the retired
+#                    Cassandra source — SQL Server has native Flink CDC).
+#   3. flink jobs  — re-run scripts/init_flink.sh once sources are healthy so
+#                    the Flink CDC connectors can attach.
+#   4. governance  — DataHub catalog + Superset BI.
+# =============================================================================
+
+include:
+  - compose/docker-compose.core.yml
+  - compose/docker-compose.sources.yml
+  - compose/docker-compose.governance.yml
+
+networks:
+  default:
+    name: ebc-lakehouse-network
+    external: true

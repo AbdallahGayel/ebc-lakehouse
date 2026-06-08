@@ -1,0 +1,64 @@
+# ================================================
+# DataHub dbt ingestion configuration (modern)
+# ================================================
+source:
+  type: dbt
+  config:
+    # -----------------------------
+    # dbt artifacts generated locally
+    # -----------------------------
+    manifest_path: "dbt/ebc_lakehouse/target/manifest.json"
+    catalog_path: "dbt/ebc_lakehouse/target/catalog.json"
+    run_results_paths:
+      - "dbt/ebc_lakehouse/target/run_results.json"
+
+    # -----------------------------
+    # Target platform (Trino)
+    # -----------------------------
+    target_platform: trino
+    target_platform_instance: ebc-trino
+
+    # -----------------------------
+    # Optional features
+    # -----------------------------
+    include_column_lineage: true      # Capture column-level lineage
+    include_compiled_code: true       # Save compiled SQL for each model
+
+    # -----------------------------
+    # Entities to ingest
+    # -----------------------------
+    entities_enabled:
+      models: true      # dbt models
+      sources: true     # dbt sources
+      seeds: false      # Ignore dbt seeds
+
+    # -----------------------------
+    # Node filtering
+    # -----------------------------
+    node_name_pattern:
+      allow:
+        - ".*"          # Ingest all models and sources
+
+    # -----------------------------
+    # Stateful ingestion (incremental)
+    # -----------------------------
+    stateful_ingestion:
+      enabled: true
+      state_provider:
+        type: datahub
+        config:
+          datahub_api:
+            server: "http://localhost:8082"   # GMS REST API
+
+# -----------------------------
+# Sink configuration
+# -----------------------------
+sink:
+  type: datahub-rest
+  config:
+    server: "http://localhost:8082"
+
+# -----------------------------
+# Pipeline name in DataHub
+# -----------------------------
+pipeline_name: ebc_dbt_ingestion

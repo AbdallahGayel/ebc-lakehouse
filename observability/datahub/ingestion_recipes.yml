@@ -1,0 +1,128 @@
+# observability/datahub/ingestion_dbt.yml
+source:
+  type: dbt
+  config:
+    manifest_path:   /opt/airflow/dbt/ebc_lakehouse/target/manifest.json
+    catalog_path:    /opt/airflow/dbt/ebc_lakehouse/target/catalog.json
+    run_results_paths:
+      - /opt/airflow/dbt/ebc_lakehouse/target/run_results.json
+    target_platform:          trino
+    target_platform_instance: ebc-trino
+    environment:              PROD
+    include_column_lineage:   true
+    include_compiled_code:    true
+    emit_test_results_as_assertions: true
+    entities_enabled: {models: true, sources: true, seeds: false, tests: true}
+sink:
+  type: datahub-rest
+  config:
+    server: "http://datahub-gms:8080"
+
+---
+# observability/datahub/ingestion_kafka.yml
+source:
+  type: kafka
+  config:
+    connection:
+      bootstrap: "kafka:29092"
+      schema_registry_url: "http://schema-registry:8081"
+    topic_patterns:
+      allow: ["ebc\\.public\\..*", "ebc-dlq-bronze"]
+      deny:  ["__consumer_offsets", "_schemas"]
+    stateful_ingestion:
+      enabled: true
+      state_provider:
+        type: datahub
+        config: {datahub_api: {server: "http://datahub-gms:8080"}}
+sink:
+  type: datahub-rest
+  config:
+    server: "http://datahub-gms:8080"
+
+---
+# observability/datahub/ingestion_trino.yml
+# Trino replaces ClickHouse as the SQL compute layer; its schemas surface
+# every medallion namespace registered in Polaris.
+source:
+  type: trino
+  config:
+    host_port: "trino:8080"
+    database:  iceberg
+    username:  ebc_user
+    schema_pattern:
+      allow: ["bronze", "silver", "gold", "serving", "ebc_semantic"]
+      deny:  ["system", "information_schema"]
+    profiling:
+      enabled: true
+      profile_table_level_only: false
+      include_field_null_count: true
+      include_field_distinct_count: true
+    column_tag_mapping:
+      ".*_hash$":     ["PII-Hashed"]
+      "card_token":   ["PII-Tokenized", "Payment-Card"]
+      "sender_proxy": ["PII-Proxy"]
+      "amount_egp":   ["Financial-Amount", "EGP"]
+      ".*_rate_pct":  ["KPI-Metric"]
+    include_table_lineage: true
+    include_view_lineage:  true
+    stateful_ingestion:
+      enabled: true
+sink:
+  type: datahub-rest
+  config:
+    server: "http://datahub-gms:8080"
+
+---
+# observability/datahub/ingestion_iceberg.yml
+# Polaris-backed Iceberg catalog. Adds lineage that Trino-side ingestion
+# cannot infer (snapshot history, partition specs, physical S3 locations).
+source:
+  type: iceberg
+  config:
+    catalog:
+      name:       ebc_polaris
+      type:       rest
+      uri:        "http://polaris:8181/api/catalog"
+      warehouse:  ebc_lakehouse
+      credential: "root:s3cr3t"
+      scope:      "PRINCIPAL_ROLE:ALL"
+    env:
+      AWS_ACCESS_KEY_ID:     minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION:    us-east-1
+    s3:
+      aws_endpoint_url:  "http://minio:9000"
+      path_style_access: true
+    namespace_pattern:
+      allow: ["bronze", "silver", "gold", "serving"]
+    profiling:
+      enabled: true
+    max_history_snapshots: 10
+    include_column_lineage: true
+sink:
+  type: datahub-rest
+  config:
+    server: "http://datahub-gms:8080"
+
+---
+# observability/datahub/ingestion_postgres.yml
+source:
+  type: postgres
+  config:
+    host_port:       "postgres-src:5432"
+    database:        ebc_sources
+    username:        ebc_src
+    password:        "${POSTGRES_EBC_SRC_PASSWORD}"
+    database_alias:  ebc-postgres-src
+    schema_pattern:  {allow: ["public"]}
+    table_pattern:
+      allow:
+        - "public.ach_transactions"
+        - "public.meeza_authorisations"
+        - "public.ipn_transactions"
+    include_table_lineage:  true
+    include_column_lineage: true
+sink:
+  type: datahub-rest
+  config:
+    server: "http://datahub-gms:8080"

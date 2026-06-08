@@ -1,0 +1,179 @@
+version: 2
+
+# =============================================================================
+# EBC Lakehouse — MetricFlow Metric Definitions
+#
+# IMPORTANT: ratio metric numerator/denominator reference METRIC names,
+# not measure names. Simple metrics are defined first so they can be
+# referenced by downstream ratio metrics.
+#
+# Example queries:
+#   mf query --metrics total_transactions --group-by scheme --start-time 2024-01-01
+#   mf query --metrics payment_approval_rate --group-by scheme,report_date__week
+#   mf query --metrics net_settlement_value_egp --group-by originating_bank_id
+# =============================================================================
+
+metrics:
+
+  # ── Simple Volume Metrics (source: transactions_daily) ────────────────────
+  # These are also used as numerator/denominator inputs for ratio metrics.
+
+  - name: total_transactions
+    label: "Total Transactions"
+    description: >
+      Total count of payment transactions across all EBC payment schemes
+      (EG-ACH, MEEZA, IPN-INSTAPAY, MEEZA-DIGITAL, 123-ATM-NETWORK).
+    type: simple
+    type_params:
+      measure: transaction_count
+
+  - name: total_payment_value_egp
+    label: "Total Payment Value (EGP)"
+    description: >
+      Total monetary value of all payment transactions in Egyptian Pounds.
+    type: simple
+    type_params:
+      measure: total_amount_egp
+
+  - name: total_approved_transactions
+    label: "Total Approved Transactions"
+    description: "Count of payment transactions that were approved or successfully completed."
+    type: simple
+    type_params:
+      measure: approved_transaction_count
+
+  - name: total_failed_transactions
+    label: "Total Failed Transactions"
+    description: "Count of payment transactions that were failed, rejected, or declined."
+    type: simple
+    type_params:
+      measure: failed_transaction_count
+
+  # ── Simple Settlement Metrics (source: settlement_daily) ──────────────────
+  # Defined before ratio metrics so they can be referenced as inputs.
+
+  - name: total_settled_transactions
+    label: "Total Settled Transactions"
+    description: "Count of EG-ACH transactions that completed the settlement cycle."
+    type: simple
+    type_params:
+      measure: settled_transaction_count
+
+  - name: total_failed_settlement_transactions
+    label: "Total Failed Settlement Transactions"
+    description: "Count of ACH transactions that failed to settle."
+    type: simple
+    type_params:
+      measure: failed_settlement_count
+
+  - name: total_returned_transactions
+    label: "Total Returned Transactions"
+    description: "Count of returned or reversed ACH transactions."
+    type: simple
+    type_params:
+      measure: returned_transaction_count
+
+  - name: total_attempted_settlements
+    label: "Total Attempted Settlements"
+    description: "Total settlement attempts: settled + failed + returned."
+    type: simple
+    type_params:
+      measure: total_attempted_settlements
+
+  - name: net_settlement_value_egp
+    label: "Net Settlement Value (EGP)"
+    description: >
+      Total net monetary value of successfully settled EG-ACH transactions
+      in Egyptian Pounds. Group by originating_bank_id or receiving_bank_id
+      for bilateral position reports.
+    type: simple
+    type_params:
+      measure: net_settlement_amount_egp
+
+  - name: failed_settlement_value_egp
+    label: "Failed Settlement Value (EGP)"
+    description: "Total monetary value of EG-ACH transactions that failed to settle."
+    type: simple
+    type_params:
+      measure: failed_settlement_amount_egp
+
+  # ── Simple Scheme Performance Metrics (source: scheme_performance_daily) ──
+
+  - name: total_channel_transaction_volume
+    label: "Total Channel Transaction Volume"
+    description: >
+      Total transaction volume broken down by payment scheme and channel.
+    type: simple
+    type_params:
+      measure: scheme_channel_txn_volume
+
+  - name: avg_scheme_approval_rate_pct
+    label: "Average Scheme Approval Rate (%)"
+    description: >
+      Volume-weighted average approval rate percentage for each payment
+      scheme and channel. CBE SLA floor is 95 %.
+    type: simple
+    type_params:
+      measure: weighted_approval_rate_pct
+
+  - name: avg_payment_processing_latency_ms
+    label: "Average Payment Processing Latency (ms)"
+    description: >
+      Average end-to-end processing time in milliseconds.
+      IPN-INSTAPAY SLA target ≤ 10 000 ms.
+    type: simple
+    type_params:
+      measure: avg_processing_latency_ms
+
+  # ── Ratio Metrics ─────────────────────────────────────────────────────────
+  # numerator / denominator reference METRIC names (not measure names).
+
+  - name: payment_approval_rate
+    label: "Payment Approval Rate"
+    description: >
+      Ratio of approved transactions to total transactions (0–1 scale).
+      Slice by scheme to compare EG-ACH vs MEEZA vs IPN-INSTAPAY performance.
+    type: ratio
+    type_params:
+      numerator: total_approved_transactions
+      denominator: total_transactions
+
+  - name: payment_failure_rate
+    label: "Payment Failure Rate"
+    description: >
+      Ratio of failed / rejected transactions to total transactions (0–1 scale).
+      Useful for SLA breach alerting.
+    type: ratio
+    type_params:
+      numerator: total_failed_transactions
+      denominator: total_transactions
+
+  - name: avg_transaction_value_egp
+    label: "Average Transaction Value (EGP)"
+    description: >
+      Weighted average monetary value per payment transaction in EGP.
+      Computed as sum(amount_egp) / sum(txn_count).
+    type: ratio
+    type_params:
+      numerator: total_payment_value_egp
+      denominator: total_transactions
+
+  - name: settlement_success_rate
+    label: "Settlement Success Rate"
+    description: >
+      Ratio of successfully settled transactions to all attempted settlements.
+      CBE regulatory minimum is 99.5 %.
+    type: ratio
+    type_params:
+      numerator: total_settled_transactions
+      denominator: total_attempted_settlements
+
+  - name: settlement_return_rate
+    label: "Settlement Return Rate"
+    description: >
+      Ratio of returned / reversed ACH transactions to total attempted
+      settlements. Elevated rates indicate upstream data-quality issues.
+    type: ratio
+    type_params:
+      numerator: total_returned_transactions
+      denominator: total_attempted_settlements

@@ -1,0 +1,49 @@
+# =============================================================================
+# recipes/trino.yaml
+# DataHub ingestion: Trino → DataHub metadata catalog
+#
+# Replaces the legacy recipes/clickhouse.yaml. Crawls every Trino schema
+# under the iceberg catalog (which is wired to Apache Polaris) and emits
+# dataset / column / lineage MCEs to DataHub GMS.
+#
+# Run:
+#   datahub ingest -c recipes/trino.yaml
+# =============================================================================
+source:
+    type: trino
+    config:
+        host_port:         'trino:8080'
+        database:          iceberg            # Trino catalog name (Polaris-backed)
+        username:          ebc_user
+        # Trino is auth=none in the local dev stack; for production replace
+        # with `password` + `http_scheme: https` and supply credentials.
+        platform_instance: ebc-trino
+        include_views:     true
+        include_tables:    true
+        schema_pattern:
+            allow:
+                - '^bronze$'
+                - '^silver$'
+                - '^gold$'
+                - '^serving$'
+                - '^ebc_semantic$'
+            deny:
+                - '^information_schema$'
+                - '^system$'
+        profiling:
+            enabled: true
+            profile_table_level_only: false
+        include_table_lineage:  true
+        include_view_lineage:   true
+        stateful_ingestion:
+            enabled: true
+            state_provider:
+                type: datahub
+                config:
+                    datahub_api:
+                        server: 'http://datahub-gms:8080'
+sink:
+    type: datahub-rest
+    config:
+        server: 'http://datahub-gms:8080'
+pipeline_name: ebc_trino_ingestion

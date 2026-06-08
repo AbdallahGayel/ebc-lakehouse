@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: metricflow_time_spine
+    description: >
+      MetricFlow time spine providing one row per calendar day from 2020-01-01
+      to 2030-12-31. Required by the dbt Semantic Layer for all time-series
+      metric aggregations. Materialized into ebc_semantic schema.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        description: "Calendar date at day granularity — primary time spine column"
+        granularity: day

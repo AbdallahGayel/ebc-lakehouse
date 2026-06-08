@@ -1,0 +1,20 @@
+-- =============================================================================
+-- 30_gold_reference.sql
+--
+-- Gold tables are owned by dbt-trino as full-rebuild `materialized='table'`
+-- models. dbt drops + recreates each table on every `dbt run --select gold.*`,
+-- so pre-creating from the init script would conflict.
+--
+-- Storage:     s3://ebc-lakehouse/gold/<table>/
+-- Format:      PARQUET (format_version=2)
+-- Partition:   month(<report_date>) — low-cardinality for 30/90-day BI windows
+-- Materialise: dbt full table (rebuild on every run)
+-- Audit cols:  _gold_loaded_at
+--
+-- Tables produced (Trino FQNs):
+--   iceberg.gold.mart_daily_txn_volume    PK=(report_date, scheme)
+--   iceberg.gold.mart_scheme_performance  PK=(report_date, scheme, channel)
+--   iceberg.gold.mart_settlement_summary  PK=(settlement_date, originating_bank_id, receiving_bank_id)
+--
+-- ── No-op marker ─────────────────────────────────────────────────────────
+SELECT 'gold ownership = dbt (no DDL emitted)' AS status;

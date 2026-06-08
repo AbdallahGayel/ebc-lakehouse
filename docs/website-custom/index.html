@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EBC Lakehouse — Interactive Documentation</title>
+  <meta name="description" content="Interactive documentation for the EBC Medallion Lakehouse: Flink CDC, Kafka, Iceberg, Polaris, Trino, dbt, Airflow, Superset, and DataHub — Egyptian Banks Company National Payment Infrastructure.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🏦</text></svg>">
+  <script src="components.js"></script>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ============ SIDEBAR ============ -->
+  <div id="sidebar-container"></div>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="main-content">
+    <!-- ======== CONTENT ======== -->
+
+<section class="section hero" id="hero">
+      <div class="hero-bg-grid"></div>
+      <div class="hero-glow glow-1"></div>
+      <div class="hero-glow glow-2"></div>
+
+      <div class="hero-badge">
+        <span class="dot"></span>
+        v4.0 — Flink CDC Edition
+      </div>
+
+      <h1><span class="gradient-text">EBC Medallion Lakehouse</span></h1>
+      <p class="subtitle">
+        Real-time data platform for Egypt's national payment infrastructure — unifying
+        ACH, Meeza, IPN-InstaPay, Digital Wallet, and ATM networks through a modern
+        streaming lakehouse architecture.
+      </p>
+
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-number cyan" data-target="5" data-suffix="+">0</div>
+          <div class="stat-label">CDC Sources</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number violet" data-target="4" data-suffix="+">0</div>
+          <div class="stat-label">Medallion Layers</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number amber" data-target="15" data-suffix="+">0</div>
+          <div class="stat-label">Services</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number emerald" data-target="30" data-suffix="s">0</div>
+          <div class="stat-label">Sec Latency</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number pink" data-target="100" data-suffix="%">0</div>
+          <div class="stat-label">% Open Source</div>
+        </div>
+      </div>
+
+      <div class="hero-scroll-indicator">
+        <span>Scroll to explore</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+<section class="section" id="architecture">
+      <div class="section-label">Architecture</div>
+      <h2 class="reveal">System Architecture</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        How the pieces fit together — from source databases through streaming CDC
+        to a governed Iceberg lakehouse and BI dashboards.
+      </p>
+
+      <!-- Architecture Diagram -->
+      <div class="arch-diagram-container reveal reveal-delay-2">
+        <div class="arch-flow">
+
+          <!-- Layer: Sources -->
+          <div class="arch-layer">
+            <div class="arch-node" data-service="postgresql" style="border-color: rgba(99,102,241,0.3);">
+              <div class="arch-node-icon">🐘</div>
+              <div class="arch-node-label">PostgreSQL</div>
+              <div class="arch-node-sub">ACH · Meeza · IPN</div>
+            </div>
+            <div class="arch-node" data-service="mongodb" style="border-color: rgba(16,185,129,0.3);">
+              <div class="arch-node-icon">🍃</div>
+              <div class="arch-node-label">MongoDB</div>
+              <div class="arch-node-sub">Wallet Events</div>
+            </div>
+            <div class="arch-node" data-service="mssql" style="border-color: rgba(59,130,246,0.3);">
+              <div class="arch-node-icon">🗄️</div>
+              <div class="arch-node-label">MS SQL Server</div>
+              <div class="arch-node-sub">ATM Sessions</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div class="arch-arrow">
+            <div class="arch-arrow-line"><div class="particle"></div></div>
+            <div class="arch-arrow-label">Flink CDC 3.2 (snapshot + stream)</div>
+          </div>
+
+          <!-- Layer: Flink CDC -->
+          <div class="arch-layer">
+            <div class="arch-node" data-service="flink" style="border-color: rgba(236,72,153,0.3);">
+              <div class="arch-node-icon">⚡</div>
+              <div class="arch-node-label">Apache Flink 1.20</div>
+              <div class="arch-node-sub">CDC Source Jobs (5 tables)</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div class="arch-arrow">
+            <div class="arch-arrow-line"><div class="particle" style="animation-delay: 0.4s;"></div></div>
+            <div class="arch-arrow-label">upsert-kafka (avro-confluent)</div>
+          </div>
+
+          <!-- Layer: Kafka -->
+          <div class="arch-layer">
+            <div class="arch-node" data-service="kafka" style="border-color: rgba(6,182,212,0.3);">
+              <div class="arch-node-icon">📨</div>
+              <div class="arch-node-label">Apache Kafka 3.7</div>
+              <div class="arch-node-sub">KRaft · 5 topics · Schema Registry</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div class="arch-arrow">
+            <div class="arch-arrow-line"><div class="particle" style="animation-delay: 0.8s;"></div></div>
+            <div class="arch-arrow-label">Flink Iceberg sink (upsert + EXACTLY_ONCE)</div>
+          </div>
+
+          <!-- Layer: Iceberg + Polaris + MinIO -->
+          <div class="arch-layer">
+            <div class="arch-node" data-service="polaris" style="border-color: rgba(139,92,246,0.3);">
+              <div class="arch-node-icon">🔮</div>
+              <div class="arch-node-label">Apache Polaris</div>
+              <div class="arch-node-sub">Iceberg REST Catalog</div>
+            </div>
+            <div class="arch-node" data-service="iceberg" style="border-color: rgba(139,92,246,0.3);">
+              <div class="arch-node-icon">🧊</div>
+              <div class="arch-node-label">Apache Iceberg 1.7</div>
+              <div class="arch-node-sub">Medallion Tables</div>
+            </div>
+            <div class="arch-node" data-service="minio" style="border-color: rgba(245,158,11,0.3);">
+              <div class="arch-node-icon">🪣</div>
+              <div class="arch-node-label">MinIO</div>
+              <div class="arch-node-sub">S3-compatible Storage</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div class="arch-arrow">
+            <div class="arch-arrow-line"><div class="particle" style="animation-delay: 1.2s;"></div></div>
+            <div class="arch-arrow-label">Trino SQL queries + dbt transformations</div>
+          </div>
+
+          <!-- Layer: Compute & Orchestration -->
+          <div class="arch-layer">
+            <div class="arch-node" data-service="trino" style="border-color: rgba(245,158,11,0.3);">
+              <div class="arch-node-icon">🔺</div>
+              <div class="arch-node-label">Trino 455</div>
+              <div class="arch-node-sub">SQL Compute Engine</div>
+            </div>
+            <div class="arch-node" data-service="dbt" style="border-color: rgba(245,158,11,0.3);">
+              <div class="arch-node-icon">🔧</div>
+              <div class="arch-node-label">dbt-trino 1.8</div>
+              <div class="arch-node-sub">Transformations</div>
+            </div>
+            <div class="arch-node" data-service="airflow" style="border-color: rgba(16,185,129,0.3);">
+              <div class="arch-node-icon">🌀</div>
+              <div class="arch-node-label">Airflow 2.10</div>
+              <div class="arch-node-sub">DAG Orchestration</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div class="arch-arrow">
+            <div class="arch-arrow-line"><div class="particle" style="animation-delay: 1.6s;"></div></div>
+            <div class="arch-arrow-label">BI dashboards + metadata lineage</div>
+          </div>
+
+          <!-- Layer: BI & Governance -->
+          <div class="arch-layer">
+            <div class="arch-node" data-service="superset" style="border-color: rgba(236,72,153,0.3);">
+              <div class="arch-node-icon">📊</div>
+              <div class="arch-node-label">Superset 4.1</div>
+              <div class="arch-node-sub">BI Dashboards</div>
+            </div>
+            <div class="arch-node" data-service="datahub" style="border-color: rgba(236,72,153,0.3);">
+              <div class="arch-node-icon">🔍</div>
+              <div class="arch-node-label">DataHub 1.5</div>
+              <div class="arch-node-sub">Catalog + Lineage</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Design Principles -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Design Principles</h3>
+      <div class="card-grid cols-3 reveal reveal-delay-1">
+        <div class="principle-card">
+          <div class="principle-card-title">🔀 Storage / Compute Separation</div>
+          <div class="principle-card-desc">MinIO holds data; Polaris holds the catalog; Trino + Flink are independent compute. Adding Spark = adding a new principal in Polaris, no data movement.</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-card-title">🎯 One Source of Truth</div>
+          <div class="principle-card-desc">Iceberg is the only place where data lives. Bronze is the latest-state-per-PK CDC mirror; everything downstream is a derivation.</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-card-title">⚡ Streaming-first Ingest</div>
+          <div class="principle-card-desc">Flink owns the source→bronze edge (sub-minute latency). Airflow + dbt own bronze→serving (hourly). BI users see consistent snapshots.</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-card-title">📝 Schema-on-Write</div>
+          <div class="principle-card-desc">Avro Schema Registry enforces compatibility on Kafka; Polaris enforces Iceberg schema on Bronze writes; dbt enforces Silver.</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-card-title">🔄 Idempotent Everything</div>
+          <div class="principle-card-desc">Init scripts, Flink job submissions, dbt models — all are safe to re-run. CREATE IF NOT EXISTS, ON CONFLICT DO NOTHING, MERGE.</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-card-title">🔌 One CDC Pattern Per Source</div>
+          <div class="principle-card-desc">Three source DBs exercise every Flink CDC variant: logical decoding (Postgres), change stream (Mongo), capture instance (SQL Server).</div>
+        </div>
+      </div>
+    </section>
+
+<section class="section" id="medallion">
+      <div class="section-label">Data Layers</div>
+      <h2 class="reveal">Medallion Architecture</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        Data flows through four layers, each with a specific owner, materialization strategy, and maintenance regime.
+      </p>
+
+      <div class="medallion-pipeline reveal reveal-delay-2">
+        <div class="medallion-stage bronze" data-layer="bronze" tabindex="0" role="button" aria-expanded="false">
+          <div class="medallion-icon">🥉</div>
+          <div class="medallion-title">BRONZE</div>
+          <div class="medallion-owner"><span class="tag cyan">Flink</span></div>
+          <div class="medallion-desc">
+            <p style="margin-bottom: 8px;"><strong>What:</strong> Raw mirror of source rows. Upsert mode with equality-field-columns. Latest state per primary key. Continuous writes every 30s checkpoint.</p>
+            <p style="font-size: 0.75rem; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted);">
+              <strong>Why:</strong> Decouples analytical engines from source DB production traffic. Minimizes CDC overhead and allows downstream schema/logic recovery without re-reading source databases.
+            </p>
+          </div>
+        </div>
+        <div class="medallion-stage silver" data-layer="silver" tabindex="0" role="button" aria-expanded="false">
+          <div class="medallion-icon">🥈</div>
+          <div class="medallion-title">SILVER</div>
+          <div class="medallion-owner"><span class="tag amber">dbt-trino</span></div>
+          <div class="medallion-desc">
+            <p style="margin-bottom: 8px;"><strong>What:</strong> Cleaned, typed, deduplicated staging. Incremental MERGE on natural PK + event-time. Hourly refresh via ebc_dbt_silver DAG.</p>
+            <p style="font-size: 0.75rem; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted);">
+              <strong>Why:</strong> Enforces schema rules, deduplicates events, and casts types. We use an incremental MERGE strategy to process only newly arrived events since the last runs, dramatically optimizing compute costs.
+            </p>
+          </div>
+        </div>
+        <div class="medallion-stage gold" data-layer="gold" tabindex="0" role="button" aria-expanded="false">
+          <div class="medallion-icon">🥇</div>
+          <div class="medallion-title">GOLD</div>
+          <div class="medallion-owner"><span class="tag amber">dbt-trino</span></div>
+          <div class="medallion-desc">
+            <p style="margin-bottom: 8px;"><strong>What:</strong> Business-domain aggregates. Full refresh marts — small tables that guarantee exact match with silver. Triggered by silver completion.</p>
+            <p style="font-size: 0.75rem; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted);">
+              <strong>Why:</strong> Standardizes key metrics (e.g. settlement position). Since Gold tables are small, full table refreshes guarantee consistency with Silver, completely avoiding incremental pipeline sync bugs.
+            </p>
+          </div>
+        </div>
+        <div class="medallion-stage serving" data-layer="serving" tabindex="0" role="button" aria-expanded="false">
+          <div class="medallion-icon">🚀</div>
+          <div class="medallion-title">SERVING</div>
+          <div class="medallion-owner"><span class="tag amber">dbt-trino</span></div>
+          <div class="medallion-desc">
+            <p style="margin-bottom: 8px;"><strong>What:</strong> BI-optimized projections. Incremental MERGE on natural BI key. Last-7-day hot window, cache-busting with refreshed_at. Triggered by gold.</p>
+            <p style="font-size: 0.75rem; border-top: 1px solid var(--border-subtle); padding-top: 8px; color: var(--text-muted);">
+              <strong>Why:</strong> Tailored for BI tool query speeds. Limiting the table to a hot 7-day window keeps query latencies low, and the <code>refreshed_at</code> timestamp busts BI client caching.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medallion Contract Table -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Layer Contract</h3>
+      <div class="data-table-wrapper reveal reveal-delay-1">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Owner</th>
+              <th>Materialization</th>
+              <th>Maintenance</th>
+              <th>Refresh Trigger</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag amber">Bronze</span></td>
+              <td>Flink Iceberg Sink</td>
+              <td><code>upsert</code> (equality-field-columns)</td>
+              <td>Flink compacts on checkpoint</td>
+              <td>Continuous (~30s)</td>
+            </tr>
+            <tr>
+              <td><span class="tag cyan">Silver</span></td>
+              <td>dbt-trino</td>
+              <td><code>incremental</code> + <code>merge</code></td>
+              <td><code>optimize</code> + <code>expire_snapshots('7d')</code></td>
+              <td><code>ebc_dbt_silver</code> DAG (hourly)</td>
+            </tr>
+            <tr>
+              <td><span class="tag amber">Gold</span></td>
+              <td>dbt-trino</td>
+              <td><code>table</code> (full refresh)</td>
+              <td><code>optimize</code> + <code>expire_snapshots</code></td>
+              <td>Triggered by Silver</td>
+            </tr>
+            <tr>
+              <td><span class="tag violet">Serving</span></td>
+              <td>dbt-trino</td>
+              <td><code>incremental</code> + <code>merge</code></td>
+              <td><code>optimize</code> + <code>expire_snapshots</code></td>
+              <td>Triggered by Gold</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tables per layer -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Tables by Layer</h3>
+      <div class="card-grid cols-2 reveal reveal-delay-1">
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">🥉 Bronze Tables</h4>
+          <div class="data-table-wrapper" style="margin:0;">
+            <table class="data-table">
+              <thead><tr><th>Table</th><th>Source</th><th>PK</th></tr></thead>
+              <tbody>
+                <tr><td><code>ach_transactions</code></td><td>PostgreSQL</td><td><code>txn_id</code></td></tr>
+                <tr><td><code>meeza_authorisations</code></td><td>PostgreSQL</td><td><code>auth_id</code></td></tr>
+                <tr><td><code>ipn_transactions</code></td><td>PostgreSQL</td><td><code>txn_id</code></td></tr>
+                <tr><td><code>wallet_events</code></td><td>MongoDB</td><td><code>_id</code></td></tr>
+                <tr><td><code>atm_sessions</code></td><td>MS SQL Server</td><td><code>atm_id, session_id</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">🥈 Silver Tables</h4>
+          <div class="data-table-wrapper" style="margin:0;">
+            <table class="data-table">
+              <thead><tr><th>Table</th><th>Strategy</th><th>Unique Key</th></tr></thead>
+              <tbody>
+                <tr><td><code>stg_ach_transactions</code></td><td>incremental merge</td><td><code>txn_id</code></td></tr>
+                <tr><td><code>stg_meeza_authorisations</code></td><td>incremental merge</td><td><code>auth_id</code></td></tr>
+                <tr><td><code>stg_ipn_transactions</code></td><td>incremental merge</td><td><code>txn_id</code></td></tr>
+                <tr><td><code>stg_meeza_digital_wallet</code></td><td>incremental merge</td><td><code>_id</code></td></tr>
+                <tr><td><code>stg_atm_sessions</code></td><td>incremental merge</td><td><code>atm_id, session_id</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">🥇 Gold Tables</h4>
+          <div class="data-table-wrapper" style="margin:0;">
+            <table class="data-table">
+              <thead><tr><th>Table</th><th>Domain</th><th>Strategy</th></tr></thead>
+              <tbody>
+                <tr><td><code>mart_daily_txn_volume</code></td><td>Cross-rail daily volume</td><td>full refresh</td></tr>
+                <tr><td><code>mart_scheme_performance</code></td><td>Per-scheme approval rates</td><td>full refresh</td></tr>
+                <tr><td><code>mart_settlement_summary</code></td><td>Net settlement per bank pair</td><td>full refresh</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">🚀 Serving Tables</h4>
+          <div class="data-table-wrapper" style="margin:0;">
+            <table class="data-table">
+              <thead><tr><th>Table</th><th>BI Key</th><th>Window</th></tr></thead>
+              <tbody>
+                <tr><td><code>daily_txn_volume</code></td><td>report_date + scheme</td><td>Last 7 days</td></tr>
+                <tr><td><code>scheme_performance</code></td><td>report_date + scheme + channel</td><td>Last 7 days</td></tr>
+                <tr><td><code>settlement_summary</code></td><td>settlement_date + bank pair</td><td>Last 7 days</td></tr>
+                <tr><td><code>pipeline_metrics</code></td><td>recorded_at</td><td>All</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+<section class="section" id="services">
+      <div class="section-label">Deep Dives</div>
+      <h2 class="reveal">Service Catalog</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        Every service in the platform — what it does, why it was chosen, where it's configured, and how it connects to the rest.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 32px;">
+
+        <!-- Kafka -->
+        <div class="service-card reveal" id="svc-kafka">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon streaming">📨</div>
+            <div class="service-info">
+              <div class="service-name">Apache Kafka 3.7</div>
+              <div class="service-role">Schema-governed event backbone — KRaft mode, no Zookeeper</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag cyan">Streaming</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Port</div><div class="service-detail-value"><code>9092</code> (host) / <code>29092</code> (internal)</div></div>
+                <div class="service-detail-item"><div class="service-detail-label">UI</div><div class="service-detail-value"><a href="http://localhost:8090" target="_blank">localhost:8090</a> (Kafka UI)</div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Config</div><div class="service-detail-value"><code>compose/docker-compose.core.yml</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Apache Kafka</strong> is a distributed, horizontally scalable, partition-based event log. Unlike traditional message queues that delete messages after consumption, Kafka retains all published events on disk according to configuration. Events are written sequentially into partitions, enabling high-performance append-only operations.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Without Kafka, streaming ingestion would require direct source-to-target HTTP or database calls. This tightly couples producers (Flink CDC) with consumers (Iceberg sinks). If Iceberg catalog writes stall or Flink restarts, the source would drop changes. Kafka acts as a highly durable <strong>write-ahead log</strong> and message buffer, isolating the ingest edge from analytical storage.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Extremely high write throughput</td><td>Steep operations learning curve</td></tr>
+                    <tr><td>Allows multiple consumers for same topics</td><td>Requires strict partition count planning</td></tr>
+                    <tr><td>Durable retention (up to infinity)</td><td>High memory and disk management overhead</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Kafka serves as the central event bus between Flink CDC source jobs and Flink Iceberg sink jobs. Every CDC event from every source database passes through a dedicated Kafka topic before landing in Iceberg.</p>
+                <h4 style="margin-top: 12px; font-size: 0.85rem;">Key Configuration:</h4>
+                <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-secondary);">
+                  <li>Mode: <strong>KRaft</strong> (no Zookeeper — removed in Confluent ≥ 7.5)</li>
+                  <li>Topics: <code>ebc.&lt;schema&gt;.&lt;table&gt;</code> naming convention</li>
+                  <li>Partitions: <strong>6 per topic</strong></li>
+                  <li>Format: <code>upsert-kafka</code> with <code>avro-confluent</code> serialization</li>
+                  <li>Schema Registry: <strong>Confluent Schema Registry 7.7</strong> at port <code>8081</code></li>
+                  <li>Subjects: 10 total (5 key + 5 value schemas)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flink -->
+        <div class="service-card reveal" id="svc-flink">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon streaming">⚡</div>
+            <div class="service-info">
+              <div class="service-name">Apache Flink 1.20</div>
+              <div class="service-role">Unified CDC ingest + Iceberg sink engine — SQL Gateway for job submission</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag cyan">Streaming</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">JobManager</div><div class="service-detail-value"><a href="http://localhost:8881" target="_blank">localhost:8881</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">SQL Gateway</div><div class="service-detail-value"><a href="http://localhost:8883" target="_blank">localhost:8883</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Config</div><div class="service-detail-value"><code>flink/Dockerfile</code> + <code>flink/jobs/*.sql</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Apache Flink</strong> is a stateful stream processing framework. It is built to run computations over unbounded streams (real-time data) and bounded datasets (batch). Flink keeps state locally in memory or RocksDB and checkpoints that state asynchronously to durable storage for fault tolerance.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Traditional tools like Debezium + Kafka Connect require separate configuration setups for every single table and connector instance, which leads to JSON configuration bloat. Flink CDC unified streaming enables us to define source ingestion and table write sinks through pure, declarative SQL, drastically reducing maintenance overhead.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Stateful EXACTLY_ONCE checkpoints</td><td>High memory usage and strict JVM requirements</td></tr>
+                    <tr><td>Native support for streaming SQL</td><td>Steep recovery and state tuning curve</td></tr>
+                    <tr><td>Flink CDC 3.0 has schema evolution</td><td>Requires running cluster infrastructure</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Flink serves a dual role: (1) CDC Source — reads change events from PostgreSQL, MongoDB, and MS SQL Server, and publishes them to Kafka. (2) Iceberg Sink — consumes from Kafka topics and performs streaming upserts into Iceberg Bronze tables via the Polaris REST catalog.</p>
+                <h4 style="margin-top: 12px; font-size: 0.85rem;">Key Details:</h4>
+                <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-secondary);">
+                  <li>Checkpointing Interval: <strong>30s EXACTLY_ONCE</strong></li>
+                  <li>State Backend: <code>hashmap</code> (stored in TaskManager heap)</li>
+                  <li>SQL Gateway submits queries headlessly to the JobManager</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Iceberg -->
+        <div class="service-card reveal" id="svc-iceberg">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon storage">🧊</div>
+            <div class="service-info">
+              <div class="service-name">Apache Iceberg 1.7</div>
+              <div class="service-role">Open table format — the single source of truth for the entire lakehouse</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag violet">Storage Format</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Version</div><div class="service-detail-value">Format v2 (row-level deletes)</div></div>
+                <div class="service-detail-item"><div class="service-detail-label">File Format</div><div class="service-detail-value">Parquet + Snappy compression</div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Engines</div><div class="service-detail-value">Flink (write) · Trino (read/write)</div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Apache Iceberg</strong> is a high-performance open table format for massive analytical datasets. It acts as a metadata layer on top of raw storage (like Parquet or ORC files), enabling SQL-like transactions (ACID), schema evolution, partition evolution, and historical time-travel queries.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Legacy formats like Hive require scanning entire directories of files to check database changes, which crawls at a snail's pace as data sizes grow. Hive also does not support ACID transactions natively. Iceberg tracks snapshots of datasets at a file level using manifest lists, meaning query engines read data instantly without folder-listing delays.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>ACID transactions (readers see consistent view)</td><td>File write amplification on frequent updates</td></tr>
+                    <tr><td>Schema and partition evolution without rewrites</td><td>Requires regular compaction and snapshot expiry</td></tr>
+                    <tr><td>Open standard supported by Trino, Spark, Flink</td><td>Requires a separate catalog service (e.g. Polaris)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Iceberg is the storage format underlying every table in the lakehouse. It provides the physical file layout inside the MinIO bucket, enabling Flink CDC to write data and Trino to read and query concurrently.</p>
+                <h4 style="margin-top: 12px; font-size: 0.85rem;">Properties:</h4>
+                <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-secondary);">
+                  <li><code>write.format.default = parquet</code></li>
+                  <li><code>write.upsert.enabled = true</code> (enables row-level updates)</li>
+                  <li><code>history.expire.max-snapshot-age-ms = 604800000</code> (7 days retention)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Polaris -->
+        <div class="service-card reveal" id="svc-polaris">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon storage">🔮</div>
+            <div class="service-info">
+              <div class="service-name">Apache Polaris</div>
+              <div class="service-role">Iceberg REST catalog with multi-engine OAuth2 governance</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag violet">Catalog</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">REST API</div><div class="service-detail-value"><a href="http://localhost:8181/api/catalog" target="_blank">localhost:8181</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Health</div><div class="service-detail-value"><a href="http://localhost:8182/q/health" target="_blank">localhost:8182</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Auth</div><div class="service-detail-value">OAuth2 <code>root / s3cr3t</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Apache Polaris</strong> is a centralized open-source catalog for Iceberg tables. It exposes the standardized Iceberg REST catalog API, allowing different query engines (like Flink, Trino, and Spark) to securely discover and read tables without hardcoding individual credentials.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Without Polaris, each compute engine would require direct admin keys to S3/MinIO and its own manual copy of table metadata. This presents massive security risks and leads to out-of-sync table state. Polaris centralizes access control, issuing short-lived <strong>vended credentials</strong> scoped only to the specific table directories being queried.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Centralized OAuth2 catalog security</td><td>Relatively new project in the Iceberg ecosystem</td></tr>
+                    <tr><td>Vends scoped, short-lived S3 access tokens</td><td>Requires running an extra database backend for states</td></tr>
+                    <tr><td>Compatible with any Iceberg REST client</td><td>Fewer built-in UI administration tools currently</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Polaris manages the <code>ebc_lakehouse</code> catalog and namespaces. Flink and Trino talk directly to Polaris at port <code>8181</code> to check schema changes and metadata paths, fetching vended storage credentials on demand.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MinIO -->
+        <div class="service-card reveal" id="svc-minio">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon storage">🪣</div>
+            <div class="service-info">
+              <div class="service-name">MinIO</div>
+              <div class="service-role">S3-compatible object storage — the physical data layer</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag violet">Storage</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">API</div><div class="service-detail-value"><code>localhost:9000</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Console</div><div class="service-detail-value"><a href="http://localhost:9001" target="_blank">localhost:9001</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Credentials</div><div class="service-detail-value"><code>minioadmin / minioadmin</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>MinIO</strong> is a high-performance, S3-compatible object storage server. It stores unstructured data, files, and objects securely. It is designed to run locally on containerized systems or scale horizontally across massive distributed environments.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Testing cloud-native S3 pipelines locally requires expensive AWS sandboxes, which incur data transfer costs and demand active internet connections. MinIO replaces AWS S3 completely for local development, allowing developers to run identical S3-based ingestion jobs offline with zero costs.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Full S3 API compatibility</td><td>Requires self-management of storage volumes</td></tr>
+                    <tr><td>Extremely fast local file operations</td><td>No built-in global replication like AWS S3</td></tr>
+                    <tr><td>Resource-light and easy to configure</td><td>Data safety depends entirely on local hardware</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>MinIO serves as the physical storage layer of the EBC Lakehouse. Flink writes Parquet files to MinIO, and Trino scans them via metadata instructions. Bucket location: <code>s3://ebc-lakehouse/</code>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trino -->
+        <div class="service-card reveal" id="svc-trino">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon compute">🔺</div>
+            <div class="service-info">
+              <div class="service-name">Trino 455</div>
+              <div class="service-role">Distributed SQL compute engine — the query layer for all Iceberg data</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag amber">Compute</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">UI</div><div class="service-detail-value"><a href="http://localhost:8080" target="_blank">localhost:8080</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">User</div><div class="service-detail-value"><code>ebc_user</code> (no auth required)</div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Config</div><div class="service-detail-value"><code>trino/etc/</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Trino</strong> (formerly PrestoSQL) is a fast, distributed SQL query engine designed to query large-scale datasets across one or more heterogeneous data sources. It compiles ANSI SQL queries into distributed execution plans, executing them in parallel across a cluster of worker nodes entirely in memory.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Standard SQL databases struggle to scale to petabytes of data, and traditional MapReduce systems (like Hadoop Spark) introduce massive start-up latencies (often taking minutes to launch simple count queries). Trino solves this by processing SQL queries directly in-memory, returning results from object stores in milliseconds.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Extremely fast, memory-optimized SQL</td><td>High memory consumption; prone to Out-Of-Memory</td></tr>
+                    <tr><td>Queries data where it lives without ETL</td><td>No built-in storage; query engine only</td></tr>
+                    <tr><td>Federated query capabilities (joins S3+Postgres)</td><td>Requires separate caching setups for BI efficiency</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Trino acts as the query engine for dbt transformations, ad-hoc analyst SQL queries, and the Superset dashboard. It reads metadata from Polaris, fetches Parquet files from MinIO, and processes joins and aggregate calculations.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- dbt -->
+        <div class="service-card reveal" id="svc-dbt">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon compute">🔧</div>
+            <div class="service-info">
+              <div class="service-name">dbt-trino 1.8</div>
+              <div class="service-role">SQL transformation framework — owns silver, gold, and serving layers</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag amber">Transform</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Project</div><div class="service-detail-value"><code>dbt/ebc_lakehouse/</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Profile</div><div class="service-detail-value"><code>dbt/ebc_lakehouse/profiles.yml</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">dbt-core</div><div class="service-detail-value">1.8</div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>dbt</strong> (data build tool) is a development framework that enables data teams to write, compile, and run SQL transformations. It brings software engineering practices—like version control, modular modularization, testing, and continuous integration—to analytics code.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Traditional SQL transformations are written as monolithic, multi-thousand-line stored procedures or shell scripts that run in sequence on database schedulers. These scripts are hard to test, document, and debug. dbt solves this by compiling modular SQL files, automatically managing table dependencies, and providing data tests.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Automated dependency graph (DAG) resolution</td><td>Requires a separate scheduler (like Airflow)</td></tr>
+                    <tr><td>Built-in testing frameworks (null, unique, SLA)</td><td>SQL-only; not suited for complex procedural logic</td></tr>
+                    <tr><td>Generates automated documentation with lineage</td><td>Tends to create massive numbers of staging models</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>dbt-trino coordinates transformations from Bronze to Silver, Gold, and Serving layers inside Iceberg. It compiles models and triggers them sequentially via Trino.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Airflow -->
+        <div class="service-card reveal" id="svc-airflow">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon orchestration">🌀</div>
+            <div class="service-info">
+              <div class="service-name">Apache Airflow 2.10</div>
+              <div class="service-role">Workflow orchestrator — manages the dbt DAG chain (silver → gold → serving)</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag emerald">Orchestration</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">UI</div><div class="service-detail-value"><a href="http://localhost:8085" target="_blank">localhost:8085</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Credentials</div><div class="service-detail-value"><code>admin / admin</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">DAGs</div><div class="service-detail-value"><code>airflow/dags/</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Apache Airflow</strong> is an open-source platform to programmatically author, schedule, and monitor workflows. Workflows are declared as Directed Acyclic Graphs (DAGs) in Python code, which are read by the Airflow scheduler and distributed to workers for execution.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Relying on cron jobs for orchestration is fragile because cron lacks dependency tracking (e.g. if Step A fails, cron still runs Step B). Cron also lacks centralized logging, job retries, and failure alerts. Airflow resolves this by providing a unified UI to monitor task execution, manage failures, and handle complex routing logic.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Workflows as code (highly customizable)</td><td>Resource-heavy with scheduler delay overhead</td></tr>
+                    <tr><td>Centralized logging and task retry logic</td><td>Steep setup and maintenance complexity</td></tr>
+                    <tr><td>Extensive operator library (Trino, dbt, Slack)</td><td>Python environment version matching issues</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Airflow schedules and coordinates the execution of dbt models (Silver -> Gold -> Serving). It also manages regular Iceberg metadata maintenance tasks (compaction and snapshot expiration).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Superset -->
+        <div class="service-card reveal" id="svc-superset">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon governance">📊</div>
+            <div class="service-info">
+              <div class="service-name">Apache Superset 4.1</div>
+              <div class="service-role">Business intelligence — dashboards over Trino serving tables</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag pink">BI</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">UI</div><div class="service-detail-value"><a href="http://localhost:8088" target="_blank">localhost:8088</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Credentials</div><div class="service-detail-value"><code>admin / admin</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Config</div><div class="service-detail-value"><code>superset/</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Apache Superset</strong> is a modern, enterprise-ready business intelligence web application. It features a simple code-free visualization builder, an SQL IDE, and an access-control system that connects to any SQL-based query engine.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Commercial BI platforms (like Tableau or PowerBI) require expensive server licensing and lock teams into vendor-specific file formats. Superset is open-source, runs natively inside Docker containers, and connects to Trino queries without extra connector fees.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>100% free and open-source</td><td>Lacks advanced charting options out of the box</td></tr>
+                    <tr><td>Pre-configured integrations with Trino/JDBC</td><td>Simpler semantic layer than commercial tools</td></tr>
+                    <tr><td>Granular dashboard access control roles</td><td>Requires active cache tuning to prevent query overload</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Superset queries the Serving namespace inside Iceberg via Trino to render transaction volume graphs, settlement positions, and SLA compliance metrics.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DataHub -->
+        <div class="service-card reveal" id="svc-datahub">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon governance">🔍</div>
+            <div class="service-info">
+              <div class="service-name">DataHub 1.5</div>
+              <div class="service-role">Metadata catalog + lineage — tracks data provenance across all layers</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag pink">Governance</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">UI</div><div class="service-detail-value"><a href="http://localhost:9002" target="_blank">localhost:9002</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Credentials</div><div class="service-detail-value"><code>datahub / datahub</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Config</div><div class="service-detail-value"><code>recipes/*.yaml</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>DataHub</strong> is an extensible metadata catalog and data governance platform. It indexes databases, dashboards, data pipelines, and orchestrators to provide search, discovery, and end-to-end data lineage visualization.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>In large pipelines, identifying the source table of a BI dashboard metric is extremely difficult, relying on tribal knowledge. DataHub extracts metadata schemas and visualizes dependencies automatically, showing exactly how source updates impact downstream charts.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>End-to-end dataset dependency mapping</td><td>Extremely heavy runtime resource footprint</td></tr>
+                    <tr><td>Automated schema tracking and diffs</td><td>Lineage bridges require complex pipeline configuration</td></tr>
+                    <tr><td>Robust search and business glossary tools</td><td>Steep setup curve for custom metadata models</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>DataHub catalogs metadata from PostgreSQL, MongoDB, Kafka, Trino, and dbt, visualizing data flow from raw transaction ingestion to serving layers.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schema Registry -->
+        <div class="service-card reveal" id="svc-schema-registry">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon streaming">📋</div>
+            <div class="service-info">
+              <div class="service-name">Confluent Schema Registry 7.7</div>
+              <div class="service-role">Avro schema governance for Kafka topics</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag cyan">Streaming</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">API</div><div class="service-detail-value"><a href="http://localhost:8081" target="_blank">localhost:8081</a></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Subjects</div><div class="service-detail-value">10 (5 key + 5 value)</div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Format</div><div class="service-detail-value">Avro</div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Schema Registry</strong> is a metadata repository for schema serialization (like Avro, Protobuf, or JSON Schema) in event brokers. It provides a RESTful interface to register and fetch schemas, enforcing data types at topic entry points.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Without schema enforcement, any database change on sources (e.g. dropping columns or changing types) reaches Kafka topic events as unreadable text. This crashes downstream decoders (Flink sinks). Schema Registry acts as a gatekeeper, rejecting incompatible messages before they corrupt the event stream.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Prevents bad schemas from entering topics</td><td>Single point of failure for message writing/reading</td></tr>
+                    <tr><td>Reduces message payload sizes (saves bytes)</td><td>Fewer debugging tools for binary Avro payloads</td></tr>
+                    <tr><td>Supports evolution rules (backward/forward compatibility)</td><td>Adds complexity to local dev serialization setups</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>Schema Registry governs Avro schemas for all 5 Kafka topics. The Flink CDC write edge uses it to register schemas and append binary schema ID tags to event payloads.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PostgreSQL Source -->
+        <div class="service-card reveal" id="svc-postgresql">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon source">🐘</div>
+            <div class="service-info">
+              <div class="service-name">PostgreSQL 16 (Source)</div>
+              <div class="service-role">Source DB — ACH transactions, Meeza authorisations, IPN transactions</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag violet">Source DB</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Port</div><div class="service-detail-value"><code>5433</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Database</div><div class="service-detail-value"><code>ebc_sources</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">CDC Method</div><div class="service-detail-value">WAL logical decoding</div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>PostgreSQL</strong> is a powerful, open-source object-relational database system. It supports relational (SQL) and non-relational (JSON) querying, and uses logical replication slots to publish database change events.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Reading changes from transactional tables using periodic SELECT queries requires querying date columns constantly. This slows down database operations, locks tables, and completely misses intermediate row deletions. PostgreSQL logical replication (WAL) broadcasts row-level changes immediately with zero query overhead.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>ACID compliant transactional storage</td><td>Write-Ahead Logs (WAL) can fill disk if slots stall</td></tr>
+                    <tr><td>Native replication slot support for CDC</td><td>Logical decoding slot management requires admin permissions</td></tr>
+                    <tr><td>Reliable indexing and query planner</td><td>Replication streams can lag under heavy bulk writes</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>PostgreSQL acts as the transactional source DB for ACH transactions, Meeza authorisations, and IPN transactions. Flink CDC connects to its WAL logical slot to capture change events.</p>
+                <h4 style="margin-top: 12px; font-size: 0.85rem;">Source Tables:</h4>
+                <div class="data-table-wrapper" style="margin-top:8px;">
+                  <table class="data-table">
+                    <thead><tr><th>Table</th><th>PK</th><th>Event Time</th><th>Seeded Rows</th></tr></thead>
+                    <tbody>
+                      <tr><td><code>ach_transactions</code></td><td><code>txn_id</code></td><td><code>created_at</code></td><td>2,000</td></tr>
+                      <tr><td><code>meeza_authorisations</code></td><td><code>auth_id</code></td><td><code>auth_timestamp</code></td><td>4,000</td></tr>
+                      <tr><td><code>ipn_transactions</code></td><td><code>txn_id</code></td><td><code>initiated_at</code></td><td>6,000</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MongoDB Source -->
+        <div class="service-card reveal" id="svc-mongodb">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon source">🍃</div>
+            <div class="service-info">
+              <div class="service-name">MongoDB 7.0 (Source)</div>
+              <div class="service-role">Source DB — Meeza Digital wallet events (change streams)</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag violet">Source DB</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Port</div><div class="service-detail-value"><code>27017</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Database</div><div class="service-detail-value"><code>meeza_digital</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">CDC Method</div><div class="service-detail-value">Change streams (replica set rs0)</div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>MongoDB</strong> is a document database designed for ease of development and scaling. It stores data in flexible, JSON-like document structures. It uses a replication oplog to sync state across replica sets, which can be tapped as an event source.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Parsing nested event logs in NoSQL stores requires writing custom polling scripts that constantly poll collections. This locks threads and misses document updates/deletes. MongoDB replica sets publish document changes directly into oplogs, which Flink streams via <strong>Change Streams</strong> with zero polling logic.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Highly flexible schema-less structures</td><td>Requires replica set activation (oplog) for CDC</td></tr>
+                    <tr><td>Change streams natively push update events</td><td>High RAM footprint and complex indexing configurations</td></tr>
+                    <tr><td>Excellent horizontal write scale-out</td><td>Event payload sizes vary heavily based on documents</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>MongoDB serves as the source database for digital wallet events. Flink CDC connects to its <code>rs0</code> replica set to stream change streams directly.</p>
+                <h4 style="margin-top: 12px; font-size: 0.85rem;">Source Collections:</h4>
+                <div class="data-table-wrapper" style="margin-top:8px;">
+                  <table class="data-table">
+                    <thead><tr><th>Collection</th><th>PK</th><th>Event Time</th><th>Seeded Docs</th></tr></thead>
+                    <tbody>
+                      <tr><td><code>wallet_events</code></td><td><code>_id</code></td><td><code>event_ts</code></td><td>500</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MSSQL Source -->
+        <div class="service-card reveal" id="svc-mssql">
+          <div class="service-card-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="service-icon source">🗄️</div>
+            <div class="service-info">
+              <div class="service-name">MS SQL Server 2022</div>
+              <div class="service-role">Source DB — ATM sessions (CDC Agent + capture instances)</div>
+            </div>
+            <div class="service-toggle">▼</div>
+          </div>
+          <div class="service-card-body">
+            <div class="service-card-content">
+              <div class="service-detail-grid">
+                <div class="service-detail-item"><div class="service-detail-label">Category</div><div class="service-detail-value"><span class="tag violet">Source DB</span></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Port</div><div class="service-detail-value"><code>1433</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Database</div><div class="service-detail-value"><code>atm_telemetry</code></div></div>
+                <div class="service-detail-item"><div class="service-detail-label">Credentials</div><div class="service-detail-value"><code>sa / EbcAtm_S3cret!</code></div></div>
+              </div>
+
+              <div class="service-tabs">
+                <button class="service-tab-btn active" data-tab="what" role="tab" aria-selected="true">What is it?</button>
+                <button class="service-tab-btn" data-tab="problem" role="tab" aria-selected="false">Problem Solved</button>
+                <button class="service-tab-btn" data-tab="tradeoffs" role="tab" aria-selected="false">Trade-offs</button>
+                <button class="service-tab-btn" data-tab="project" role="tab" aria-selected="false">In this project</button>
+              </div>
+
+              <div class="service-tab-pane active" data-tab="what">
+                <p><strong>Microsoft SQL Server</strong> is a proprietary, enterprise-grade relational database management system. It supports transactional processing and analytics, and includes a built-in CDC Agent that writes transaction log changes into specialized change-capture tables.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="problem">
+                <p>Legacy database integrations read changes by executing continuous triggers. Triggers degrade database write speeds and complicate migrations. SQL Server CDC runs asynchronously off transaction logs, tracking changes in dedicated capture tables without slowing down live user queries.</p>
+              </div>
+
+              <div class="service-tab-pane" data-tab="tradeoffs">
+                <table class="data-table" style="margin: 8px 0;">
+                  <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+                  <tbody>
+                    <tr><td>Asynchronous CDC execution using transaction logs</td><td>Heavy licensing costs for production use cases</td></tr>
+                    <tr><td>Familiar, standardized SQL query syntax</td><td>Requires active running SQL Server Agent</td></tr>
+                    <tr><td>Built-in backup and recovery systems</td><td>Setup requires strict system admin privilege configurations</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="service-tab-pane" data-tab="project">
+                <p>SQL Server acts as the source database for ATM session telemetry. Flink CDC connects to it and reads data from the enabled capture instances.</p>
+                <h4 style="margin-top: 12px; font-size: 0.85rem;">Source Tables:</h4>
+                <div class="data-table-wrapper" style="margin-top:8px;">
+                  <table class="data-table">
+                    <thead><tr><th>Table</th><th>PK</th><th>Event Time</th><th>Seeded Rows</th></tr></thead>
+                    <tbody>
+                      <tr><td><code>dbo.atm_sessions</code></td><td><code>atm_id, session_id</code></td><td><code>updated_at</code></td><td>20</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+<section class="section" id="dataflow">
+      <div class="section-label">Workflows</div>
+      <h2 class="reveal">Data Flow &amp; Bootstrap</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        The step-by-step transaction life cycle, bootstrap order, and Airflow DAG coordination.
+      </p>
+
+      <!-- Step-by-Step Data Flow Lifecycle -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">1️⃣ Step-by-Step Payment Event Lifecycle</h3>
+      <p class="reveal" style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem; line-height: 1.8;">
+        Here is what happens to a single transaction—from the moment it's inserted into the source PostgreSQL database until it updates a Superset BI chart:
+      </p>
+      
+      <div class="workflow-steps reveal">
+        <div class="workflow-step">
+          <div class="workflow-step-number">1</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Database Insert (PostgreSQL Source)</div>
+            <div class="workflow-step-desc">A customer initiates an ACH bank transfer. PostgreSQL commits the transaction row, appending logical replication records to the database <strong>Write-Ahead Log (WAL)</strong>.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">2</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Logical CDC Capture (Flink Source)</div>
+            <div class="workflow-step-desc">The <strong>Flink CDC 3.2</strong> source job captures the WAL update stream in real-time, deserializes the raw bytes, and registers/updates the schema definitions.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">3</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Avro Serialization &amp; Publish (Kafka Topic)</div>
+            <div class="workflow-step-desc">Flink serialized the change event as binary Avro (governed by the <strong>Confluent Schema Registry</strong>) and publishes it to the <code>ebc.public.ach_transactions</code> topic on Kafka (6 partitions).</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">4</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Topic Streaming &amp; Sink (Flink Sink)</div>
+            <div class="workflow-step-desc">The corresponding Flink Iceberg sink job reads from the Kafka topic and writes data files (Parquet with row-level deletions) into S3 storage (MinIO) at 30-second intervals.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">5</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Catalog Transaction Registry (Polaris REST)</div>
+            <div class="workflow-step-desc">On checkpoint completion, Flink registers table commit records in the <strong>Apache Polaris Catalog</strong> using temporary vended storage tokens. The new rows are now visible to readers.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">6</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Incremental Deduplication (dbt-trino Silver)</div>
+            <div class="workflow-step-desc">Airflow's <code>ebc_dbt_silver</code> DAG runs hourly, executing dbt models on Trino. Trino issues an SQL <strong>MERGE INTO</strong> statement to deduplicate Bronze rows and load Silver staging tables.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">7</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Analytical Aggregations (dbt-trino Gold &amp; Serving)</div>
+            <div class="workflow-step-desc">Subsequent triggered DAGs compile Gold aggregates (e.g. daily totals) and Serving models. Tables are optimized and old metadata snapshots expired.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">8</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">BI Dashboard Refresh (Superset &amp; Trino)</div>
+            <div class="workflow-step-desc">An executive loads the settlement dashboard. <strong>Apache Superset</strong> queries Trino, which scans the Serving layer's latest Iceberg data in MinIO, displaying the updated transfer aggregates in seconds.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bootstrap Order -->
+      <h3 class="reveal" style="margin-top: 64px; margin-bottom: 24px;">2️⃣ System Bootstrap Order</h3>
+      <p class="reveal" style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem;">
+        <code>scripts/init_all.sh</code> enforces this exact sequence. Respect this order if running manually.
+      </p>
+
+      <div class="workflow-steps reveal">
+        <div class="workflow-step">
+          <div class="workflow-step-number">1</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Kafka (KRaft) → Schema Registry</div>
+            <div class="workflow-step-desc">Start the event backbone first. Kafka boots in KRaft mode (no Zookeeper). Schema Registry connects and becomes ready to accept Avro schema registrations.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">2</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">MinIO → MinIO Init</div>
+            <div class="workflow-step-desc">Start object storage and create the <code>ebc-lakehouse</code> bucket. This provides the physical storage layer for all Iceberg data.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">3</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Polaris Postgres → Bootstrap → Polaris → Catalog Init</div>
+            <div class="workflow-step-desc">Start Polaris's backing Postgres, bootstrap the Polaris realm, start the Polaris service, then create the <code>ebc_lakehouse</code> catalog with bronze/silver/gold/serving namespaces and OAuth2 principals.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">4</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Trino → Trino Init</div>
+            <div class="workflow-step-desc">Start Trino with the Iceberg connector pointing to Polaris. Create schemas and serving DDL (including <code>pipeline_metrics</code> table).</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">5</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Postgres Meta → Airflow Init → Scheduler + Webserver</div>
+            <div class="workflow-step-desc">Start the Airflow metadata database, run migrations, create the admin user, then start the scheduler and webserver. DAGs are now available.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">6</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Flink JM → TM → SQL Gateway → Init (first pass)</div>
+            <div class="workflow-step-desc">Start the Flink cluster (JobManager + TaskManager + SQL Gateway). Submit all jobs for the first time. CDC source jobs won't find sources yet — this is expected.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">7</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Source DBs: postgres-src / mongodb / mssql</div>
+            <div class="workflow-step-desc">Start the three source databases with seed data. PostgreSQL seeds ACH/Meeza/IPN, MongoDB seeds wallet events, SQL Server seeds ATM sessions.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">8</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Flink Init (re-submit)</div>
+            <div class="workflow-step-desc">Re-submit all Flink jobs now that sources are reachable. CDC connectors attach and begin streaming. The submitter cancels matching prior jobs before re-submitting (idempotent).</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">9</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">DataHub MySQL / ES → GMS → Upgrade → Frontend / Actions</div>
+            <div class="workflow-step-desc">Start DataHub's backing stores, then GMS (metadata service), run schema migration, then start the frontend UI and actions framework (ingestion recipes).</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-step-number">10</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-title">Redis → Superset Init → Superset + Worker</div>
+            <div class="workflow-step-desc">Start Redis (Superset cache), bootstrap Superset (create admin, register Trino database), then start the Superset web server and Celery worker.</div>
+          </div>
+        </div>
+      </div>
+
+            <!-- DAG Topology -->
+      <h3 class="reveal" style="margin-top: 64px; margin-bottom: 24px;">3️⃣ Airflow DAG Topology</h3>
+      <p class="reveal" style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem;">
+        Click on any task node to view its execution details, role description, and SLA/audit rules.
+      </p>
+
+      <div class="dag-visualizer reveal reveal-delay-1">
+        <!-- Silver DAG -->
+        <div class="dag-column">
+          <div class="dag-column-header">
+            <div class="dag-column-title">🥈 ebc_dbt_silver</div>
+            <div class="dag-column-subtitle">Schedule: Hourly (0 * * * *)</div>
+          </div>
+          <div class="dag-tasks">
+            <div class="dag-node" data-node="s1" tabindex="0" role="button">
+              <div class="dag-node-icon gate">🛡️</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">check_bronze_freshness</div>
+                <div class="dag-node-role">SLA Freshness Gate</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="s2" tabindex="0" role="button">
+              <div class="dag-node-icon run">⚡</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">dbt_run_silver</div>
+                <div class="dag-node-role">dbt Ingestion Run</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="s3" tabindex="0" role="button">
+              <div class="dag-node-icon test">🔍</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">dbt_test_silver</div>
+                <div class="dag-node-role">Schema Quality Test</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="s4" tabindex="0" role="button">
+              <div class="dag-node-icon maintain">🧹</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">maintain_silver</div>
+                <div class="dag-node-role">Optimize &amp; Expire</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="s5" tabindex="0" role="button">
+              <div class="dag-node-icon maintain">📊</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">record_pipeline_metrics</div>
+                <div class="dag-node-role">Auditing Statistics</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="s6" tabindex="0" role="button">
+              <div class="dag-node-icon trigger">🚀</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">trigger_dbt_gold</div>
+                <div class="dag-node-role">Trigger Gold DAG</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dag-trigger-arrow">➜</div>
+
+        <!-- Gold DAG -->
+        <div class="dag-column">
+          <div class="dag-column-header">
+            <div class="dag-column-title">🥇 ebc_dbt_gold</div>
+            <div class="dag-column-subtitle">Schedule: Triggered by Silver</div>
+          </div>
+          <div class="dag-tasks">
+            <div class="dag-node" data-node="g1" tabindex="0" role="button">
+              <div class="dag-node-icon run">⚡</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">dbt_run_gold</div>
+                <div class="dag-node-role">dbt Marts Run</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="g2" tabindex="0" role="button">
+              <div class="dag-node-icon test">🔍</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">dbt_test_gold</div>
+                <div class="dag-node-role">Marts Quality Test</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="g3" tabindex="0" role="button">
+              <div class="dag-node-icon maintain">🧹</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">maintain_gold</div>
+                <div class="dag-node-role">Compaction Optimize</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="g4" tabindex="0" role="button">
+              <div class="dag-node-icon trigger">🚀</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">trigger_dbt_serving</div>
+                <div class="dag-node-role">Trigger Serving DAG</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dag-trigger-arrow">➜</div>
+
+        <!-- Serving DAG -->
+        <div class="dag-column">
+          <div class="dag-column-header">
+            <div class="dag-column-title">🚀 ebc_dbt_serving</div>
+            <div class="dag-column-subtitle">Schedule: Triggered by Gold</div>
+          </div>
+          <div class="dag-tasks">
+            <div class="dag-node" data-node="v1" tabindex="0" role="button">
+              <div class="dag-node-icon run">⚡</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">dbt_run_serving</div>
+                <div class="dag-node-role">dbt BI Views Run</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="v2" tabindex="0" role="button">
+              <div class="dag-node-icon test">🔍</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">dbt_test_serving</div>
+                <div class="dag-node-role">BI Quality Test</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="v3" tabindex="0" role="button">
+              <div class="dag-node-icon maintain">🧹</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">maintain_serving</div>
+                <div class="dag-node-role">Compaction Optimize</div>
+              </div>
+            </div>
+            <div class="dag-node" data-node="v4" tabindex="0" role="button">
+              <div class="dag-node-icon maintain">📖</div>
+              <div class="dag-node-info">
+                <div class="dag-node-name">dbt_generate_docs</div>
+                <div class="dag-node-role">Catalog Docs Build</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dag-details-card reveal reveal-delay-2" id="dagDetailsCard" style="display: none;">
+        <div class="dag-details-header">
+          <span class="dag-details-title" id="dagDetailsTitle">Select a task node to view details</span>
+          <span class="dag-details-close" id="dagDetailsClose">✕</span>
+        </div>
+        <div class="dag-details-body" id="dagDetailsBody">
+          Click on any task node in the DAG topology above to learn what it does, its inputs and outputs, and why it is part of the orchestration flow.
+        </div>
+      </div>
+    </section>
+
+<section class="section" id="reference">
+      <div class="section-label">Reference</div>
+      <h2 class="reveal">Configuration &amp; Reference</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        Port matrix, naming conventions, version matrix, and where every config lives.
+      </p>
+
+      <!-- Port Matrix -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Port Matrix</h3>
+      <div class="data-table-wrapper reveal reveal-delay-1">
+        <table class="data-table" id="portTable">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Host Port</th>
+              <th>Container Port</th>
+              <th>Protocol</th>
+              <th>URL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Kafka (host)</td><td><code>9092</code></td><td>9092</td><td>Kafka wire</td><td>—</td></tr>
+            <tr><td>Schema Registry</td><td><code>8081</code></td><td>8081</td><td>HTTP/REST</td><td><a href="http://localhost:8081" target="_blank">localhost:8081</a></td></tr>
+            <tr><td>Kafka UI</td><td><code>8090</code></td><td>8080</td><td>HTTP</td><td><a href="http://localhost:8090" target="_blank">localhost:8090</a></td></tr>
+            <tr><td>MinIO API</td><td><code>9000</code></td><td>9000</td><td>S3</td><td>—</td></tr>
+            <tr><td>MinIO Console</td><td><code>9001</code></td><td>9001</td><td>HTTP</td><td><a href="http://localhost:9001" target="_blank">localhost:9001</a></td></tr>
+            <tr><td>Polaris REST</td><td><code>8181</code></td><td>8181</td><td>HTTP</td><td><a href="http://localhost:8181" target="_blank">localhost:8181</a></td></tr>
+            <tr><td>Polaris Health</td><td><code>8182</code></td><td>8182</td><td>HTTP</td><td><a href="http://localhost:8182/q/health" target="_blank">localhost:8182</a></td></tr>
+            <tr><td>Trino</td><td><code>8080</code></td><td>8080</td><td>HTTP+JDBC</td><td><a href="http://localhost:8080" target="_blank">localhost:8080</a></td></tr>
+            <tr><td>Flink JobManager</td><td><code>8881</code></td><td>8081</td><td>HTTP REST</td><td><a href="http://localhost:8881" target="_blank">localhost:8881</a></td></tr>
+            <tr><td>Flink SQL Gateway</td><td><code>8883</code></td><td>8083</td><td>HTTP REST</td><td><a href="http://localhost:8883" target="_blank">localhost:8883</a></td></tr>
+            <tr><td>Airflow</td><td><code>8085</code></td><td>8080</td><td>HTTP</td><td><a href="http://localhost:8085" target="_blank">localhost:8085</a></td></tr>
+            <tr><td>Superset</td><td><code>8088</code></td><td>8088</td><td>HTTP</td><td><a href="http://localhost:8088" target="_blank">localhost:8088</a></td></tr>
+            <tr><td>DataHub Frontend</td><td><code>9002</code></td><td>9002</td><td>HTTP</td><td><a href="http://localhost:9002" target="_blank">localhost:9002</a></td></tr>
+            <tr><td>PostgreSQL (src)</td><td><code>5433</code></td><td>5432</td><td>PostgreSQL</td><td>—</td></tr>
+            <tr><td>PostgreSQL (meta)</td><td><code>5434</code></td><td>5432</td><td>PostgreSQL</td><td>—</td></tr>
+            <tr><td>Polaris Postgres</td><td><code>5435</code></td><td>5432</td><td>PostgreSQL</td><td>—</td></tr>
+            <tr><td>MongoDB</td><td><code>27017</code></td><td>27017</td><td>MongoDB</td><td>—</td></tr>
+            <tr><td>MS SQL Server</td><td><code>1433</code></td><td>1433</td><td>TDS</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Version Matrix -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Version Matrix</h3>
+      <div class="data-table-wrapper reveal reveal-delay-1">
+        <table class="data-table">
+          <thead>
+            <tr><th>Component</th><th>Version</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Apache Kafka</td><td>3.7 (Confluent 7.7, KRaft)</td></tr>
+            <tr><td>Confluent Schema Registry</td><td>7.7</td></tr>
+            <tr><td>MinIO</td><td>RELEASE.2025-*</td></tr>
+            <tr><td>Apache Polaris</td><td>latest (Quarkus build)</td></tr>
+            <tr><td>Apache Iceberg</td><td>1.7</td></tr>
+            <tr><td>Apache Flink</td><td>1.20.0 (Java 17)</td></tr>
+            <tr><td>Flink CDC connectors</td><td>3.2.0</td></tr>
+            <tr><td>Iceberg-Flink runtime</td><td>1.7</td></tr>
+            <tr><td>Trino</td><td>455</td></tr>
+            <tr><td>Apache Airflow</td><td>2.10.3</td></tr>
+            <tr><td>dbt-core</td><td>1.8</td></tr>
+            <tr><td>dbt-trino</td><td>1.8</td></tr>
+            <tr><td>Apache Superset</td><td>4.1.1</td></tr>
+            <tr><td>DataHub</td><td>1.5.0.3</td></tr>
+            <tr><td>PostgreSQL</td><td>16</td></tr>
+            <tr><td>MongoDB</td><td>7.0</td></tr>
+            <tr><td>MS SQL Server</td><td>2022 Developer</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Config Location Map -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Configuration File Map</h3>
+      <div class="data-table-wrapper reveal reveal-delay-1">
+        <table class="data-table">
+          <thead><tr><th>Concern</th><th>File</th></tr></thead>
+          <tbody>
+            <tr><td>Compose modules</td><td><code>compose/docker-compose.{core,sources,governance}.yml</code></td></tr>
+            <tr><td>Flink images + JARs</td><td><code>flink/Dockerfile</code></td></tr>
+            <tr><td>Flink streaming jobs</td><td><code>flink/jobs/*.sql</code></td></tr>
+            <tr><td>Flink job submitter</td><td><code>scripts/flink/submit_flink_jobs.sh</code></td></tr>
+            <tr><td>Polaris realm bootstrap</td><td><code>polaris/bootstrap/</code></td></tr>
+            <tr><td>Polaris catalog + namespace init</td><td><code>polaris/catalog-init/init_polaris.py</code></td></tr>
+            <tr><td>Trino server config</td><td><code>trino/etc/{config,jvm,node,log}.properties</code></td></tr>
+            <tr><td>Trino Iceberg catalog</td><td><code>trino/etc/catalog/iceberg.properties</code></td></tr>
+            <tr><td>Trino ACL</td><td><code>trino/etc/rules.json</code></td></tr>
+            <tr><td>Trino schema + serving DDL</td><td><code>trino/init/sql/*.sql</code></td></tr>
+            <tr><td>Airflow DAGs</td><td><code>airflow/dags/ebc_dbt_{silver,gold,serving}.py</code></td></tr>
+            <tr><td>dbt project</td><td><code>dbt/ebc_lakehouse/dbt_project.yml + profiles.yml</code></td></tr>
+            <tr><td>dbt models</td><td><code>dbt/ebc_lakehouse/models/{silver,gold,serving,semantic}</code></td></tr>
+            <tr><td>Superset bootstrap</td><td><code>superset/{Dockerfile,superset_config.py}</code></td></tr>
+            <tr><td>DataHub ingestion</td><td><code>recipes/*.yaml</code></td></tr>
+            <tr><td>OpenLineage emitter</td><td><code>observability/ebc_openlineage_emitter.py</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Naming Conventions -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Naming Conventions</h3>
+      <div class="card-grid cols-2 reveal reveal-delay-1">
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">📨 Kafka Topics</h4>
+          <div class="code-block"><div class="code-block-header"><span class="code-lang">Pattern</span></div><pre><code>ebc.&lt;source_schema&gt;.&lt;source_table&gt;
+
+Examples:
+  ebc.public.ach_transactions
+  ebc.meeza_digital.wallet_events
+  ebc.dbo.atm_sessions</code></pre></div>
+        </div>
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">🧊 Iceberg Tables</h4>
+          <div class="code-block"><div class="code-block-header"><span class="code-lang">Pattern</span></div><pre><code>bronze.&lt;source_table&gt;
+silver.stg_&lt;source_table&gt;
+gold.mart_&lt;business_domain&gt;
+serving.&lt;business_facing_name&gt;</code></pre></div>
+        </div>
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">🌀 Airflow DAGs</h4>
+          <div class="code-block"><div class="code-block-header"><span class="code-lang">Pattern</span></div><pre><code>ebc_&lt;owner&gt;_&lt;layer&gt;
+
+  ebc_dbt_silver   (hourly)
+  ebc_dbt_gold     (triggered)
+  ebc_dbt_serving  (triggered)</code></pre></div>
+        </div>
+        <div class="glass-card">
+          <h4 style="margin-bottom: 12px;">⚡ Flink Jobs</h4>
+          <div class="code-block"><div class="code-block-header"><span class="code-lang">Pattern</span></div><pre><code>flink/jobs/&lt;order&gt;_&lt;kind&gt;_&lt;source&gt;.sql
+
+  00-09: catalog setup
+  10-19: CDC source jobs
+  20-29: Iceberg sink jobs</code></pre></div>
+        </div>
+      </div>
+    </section>
+
+    
+<!-- ======== SECTION 8: GLOSSARY ======== -->
+
+    <section class="section" id="glossary">
+      <div class="section-label">Reference</div>
+      <h2 class="reveal">Glossary</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        Key terms and concepts used throughout the EBC Lakehouse platform.
+      </p>
+
+      <input type="text" class="glossary-search reveal reveal-delay-2" id="glossarySearch" placeholder="🔍  Search glossary terms…">
+
+      <div class="reveal reveal-delay-2" id="glossaryList">
+        <div class="glossary-item"><div class="glossary-term">Bronze Layer</div><div class="glossary-def">Raw mirror of source rows in Iceberg, written continuously by Flink. Latest state per primary key, with zero analytical cleaning or schema transformations.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Silver Layer</div><div class="glossary-def">Cleaned, typed, and deduplicated staging layer, owned by dbt. Employs an incremental MERGE strategy based on natural keys and event-time ordering.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Gold Layer</div><div class="glossary-def">Business-domain aggregates — full-refresh marts that guarantee exact match with Silver. These represent the primary analytical tables.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Serving Layer</div><div class="glossary-def">BI-optimised, MERGE-upserted projections of Gold with cache-busting timestamps. Contains a rolling hot window of data for instant dashboard queries.</div></div>
+        <div class="glossary-item"><div class="glossary-term">CDC (Change Data Capture)</div><div class="glossary-def">Streaming row-level changes from a source database. PostgreSQL uses logical replication (WAL), MongoDB uses change streams, and MS SQL Server uses Agent capture tables. Cross-links: <a href="#services" class="glossary-link" data-service="postgresql">PostgreSQL</a>, <a href="#services" class="glossary-link" data-service="mongodb">MongoDB</a>, <a href="#services" class="glossary-link" data-service="mssql">MS SQL Server</a>.</div></div>
+        <div class="glossary-item"><div class="glossary-term">upsert-kafka</div><div class="glossary-def">Flink connector that treats a Kafka topic as a compacted, key-value table, sending updates or deletes based on primary keys. Cross-link: <a href="#services" class="glossary-link" data-service="kafka">Apache Kafka</a>.</div></div>
+        <div class="glossary-item"><div class="glossary-term">equality-field-columns</div><div class="glossary-def">Iceberg sink properties mapping primary keys that Flink uses to identify and update records during streaming upserts. Cross-link: <a href="#services" class="glossary-link" data-service="iceberg">Apache Iceberg</a>.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Polaris</div><div class="glossary-def">Apache Iceberg REST catalog exposing standardized OAuth2 credentials and vending temporary S3 storage paths. Cross-link: <a href="#services" class="glossary-link" data-service="polaris">Apache Polaris</a>.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Vended Credentials</div><div class="glossary-def">Polaris-issued, short-lived S3 credentials that scope catalog client permissions to specific storage prefixes.</div></div>
+        <div class="glossary-item"><div class="glossary-term">MERGE Strategy</div><div class="glossary-def">An incremental write strategy in dbt-trino that executes SQL MERGE INTO against target Iceberg tables, performing updates and inserts efficiently.</div></div>
+        <div class="glossary-item"><div class="glossary-term">TaskGroup</div><div class="glossary-def">Airflow construct that groups related tasks in the webserver UI to visually simplify graph monitoring without altering logic dependencies.</div></div>
+        <div class="glossary-item"><div class="glossary-term">KRaft</div><div class="glossary-def">Kafka Raft metadata mode that replaces Zookeeper, simplifying cluster coordination and improving partition scaling limits.</div></div>
+        <div class="glossary-item"><div class="glossary-term">EXACTLY_ONCE</div><div class="glossary-def">Flink's execution guarantee that uses checkpoints to ensure stream records are processed and committed exactly once in sinks, avoiding duplicates.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Snapshot Expiry</div><div class="glossary-def">Iceberg metadata maintenance task that deletes old database snapshots and their associated data files on S3 to recover storage.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Optimize</div><div class="glossary-def">Iceberg metadata operation that compacts small Parquet files into larger files, improving downstream read speeds.</div></div>
+        <div class="glossary-item"><div class="glossary-term">OpenLineage</div><div class="glossary-def">Open API standard for metadata collection. Airflow sends OpenLineage payloads to DataHub to render runtime column and table dependencies.</div></div>
+        <div class="glossary-item"><div class="glossary-term">WAL (Write-Ahead Logging)</div><div class="glossary-def">A family of techniques for providing atomicity and durability in database systems. PostgreSQL logical CDC reads events straight from WAL slots.</div></div>
+        <div class="glossary-item"><div class="glossary-term">ACID Transactions</div><div class="glossary-def">Atomicity, Consistency, Isolation, and Durability guarantees. Iceberg brings ACID transactional safety to object storage files.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Schema Registry</div><div class="glossary-def">Central repository governing Avro schema definitions. Enforces serialization rules on Kafka producers and consumers. Cross-link: <a href="#services" class="glossary-link" data-service="schema-registry">Schema Registry</a>.</div></div>
+        <div class="glossary-item"><div class="glossary-term">OpenLineage Bridge</div><div class="glossary-def">Custom Python daemon translating incoming OpenLineage payloads from Airflow into DataHub-compatible GraphQL ingestion APIs.</div></div>
+        <div class="glossary-item"><div class="glossary-term">Vending Catalog</div><div class="glossary-def">A catalog structure where metadata queries return temporary object storage paths and scoped access tokens to clients, isolating physical storage credentials.</div></div>
+      </div>
+    </section>
+
+<section class="section" id="runbook">
+      <div class="section-label">Operations</div>
+      <h2 class="reveal">Runbook</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        Quick start, common commands, failure modes, and troubleshooting — everything you need to operate the platform day to day.
+      </p>
+
+      <!-- Quick Start -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Quick Start</h3>
+      <div class="reveal reveal-delay-1">
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">bash</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div>
+          <pre><code># 1. One-shot bring-up (Core → Sources → Flink re-submit → Governance)
+bash scripts/init_all.sh
+
+# 2. Trigger the medallion pipeline
+docker exec ebc-airflow-webserver airflow dags trigger ebc_dbt_silver
+
+# 3. Verify end-to-end (counts, freshness, layer alignment)
+bash scripts/verify.sh</code></pre>
+        </div>
+      </div>
+
+      <!-- Useful Commands -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Operational Commands</h3>
+      <div class="data-table-wrapper reveal reveal-delay-1">
+        <table class="data-table">
+          <thead><tr><th>Task</th><th>Command</th></tr></thead>
+          <tbody>
+            <tr><td>List all DAGs</td><td><code>docker exec ebc-airflow-webserver airflow dags list</code></td></tr>
+            <tr><td>Trigger a DAG</td><td><code>docker exec ebc-airflow-webserver airflow dags trigger &lt;dag_id&gt;</code></td></tr>
+            <tr><td>List Flink jobs</td><td><code>curl -s http://localhost:8881/jobs/overview | python -m json.tool</code></td></tr>
+            <tr><td>Cancel a Flink job</td><td><code>curl -X PATCH "http://localhost:8881/jobs/&lt;jid&gt;?mode=cancel"</code></td></tr>
+            <tr><td>Resubmit Flink jobs</td><td><code>bash scripts/init_flink.sh</code></td></tr>
+            <tr><td>Topic offsets</td><td><code>docker exec ebc-kafka kafka-get-offsets --bootstrap-server localhost:29092 --topic &lt;topic&gt;</code></td></tr>
+            <tr><td>Trino query</td><td><code>docker exec -e JAVA_TOOL_OPTIONS= ebc-trino trino --user root --execute "&lt;sql&gt;"</code></td></tr>
+            <tr><td>Force compaction</td><td><code>ALTER TABLE iceberg.&lt;schema&gt;.&lt;table&gt; EXECUTE optimize;</code></td></tr>
+            <tr><td>Expire snapshots</td><td><code>ALTER TABLE iceberg.&lt;schema&gt;.&lt;table&gt; EXECUTE expire_snapshots(retention_threshold =&gt; '7d');</code></td></tr>
+            <tr><td>End-to-end verify</td><td><code>bash scripts/verify.sh</code></td></tr>
+            <tr><td>Generate traffic</td><td><code>bash scripts/generate_continuous_traffic.sh</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sample Queries -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Sample Trino Queries</h3>
+      <div class="reveal reveal-delay-1">
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">sql</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div>
+          <pre><code>-- Daily transaction volume across all rails
+SELECT report_date, scheme, txn_count, total_amount_egp
+FROM   iceberg.serving.daily_txn_volume
+WHERE  report_date >= current_date - INTERVAL '7' DAY
+ORDER  BY report_date DESC, scheme;
+
+-- IPN SLA compliance
+SELECT count(*)                                       AS total_txns,
+       count_if(met_sla)                              AS met,
+       round(count_if(met_sla) * 100.0 / count(*), 2) AS pct
+FROM   iceberg.silver.stg_ipn_transactions;
+
+-- ATM uptime by network
+SELECT network_id, count(*) AS sessions,
+       count_if(txn_status = 'APPROVED') AS approved
+FROM   iceberg.silver.stg_atm_sessions
+GROUP  BY network_id;
+
+-- Settlement net position (bank to bank)
+SELECT originating_bank_id, receiving_bank_id,
+       net_settled_egp, settlement_rate_pct
+FROM   iceberg.serving.settlement_summary
+WHERE  settlement_date = current_date - INTERVAL '1' DAY
+ORDER  BY net_settled_egp DESC
+LIMIT  20;
+
+-- Iceberg snapshot history
+SELECT committed_at, snapshot_id, operation, summary
+FROM   "iceberg.bronze.ach_transactions$snapshots"
+ORDER  BY committed_at DESC
+LIMIT  10;</code></pre>
+        </div>
+      </div>
+
+      <!-- Troubleshooting -->
+      <h3 class="reveal" style="margin-top: 48px; margin-bottom: 24px;">Troubleshooting</h3>
+      <div class="accordion reveal reveal-delay-1">
+
+        <div class="accordion-item" id="ts-1">
+          <div class="accordion-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="accordion-status warning"></div>
+            <div class="accordion-title">Silver DAG fails on check_bronze_freshness</div>
+            <div class="accordion-chevron">▼</div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <p><strong>Symptom:</strong> <code>Bronze freshness FAILED: bronze.X: lag 6.2h exceeds 6h SLA…</code></p>
+              <p style="margin-top: 8px;"><strong>Cause:</strong> No source-side activity for more than <code>EBC_BRONZE_SLA_HOURS</code> (default 6h).</p>
+              <p style="margin-top: 8px;"><strong>Fix:</strong></p>
+              <div class="code-block"><div class="code-block-header"><span class="code-lang">bash</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div><pre><code># Option A: Generate traffic
+bash scripts/generate_continuous_traffic.sh
+
+# Option B: Raise the SLA temporarily
+# Edit EBC_BRONZE_SLA_HOURS in compose/docker-compose.core.yml</code></pre></div>
+              <p style="margin-top: 8px;">Tables idle &gt; 24h (<code>EBC_BRONZE_HISTORICAL_HOURS</code>) are treated as backfills and warn rather than fail.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" id="ts-2">
+          <div class="accordion-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="accordion-status error"></div>
+            <div class="accordion-title">Flink jobs FAILED: NoResourceAvailableException</div>
+            <div class="accordion-chevron">▼</div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <p><strong>Cause:</strong> TaskManager slot exhaustion. Default is 16 slots; each running job consumes 1.</p>
+              <div class="code-block"><div class="code-block-header"><span class="code-lang">bash</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div><pre><code># Check slot usage
+curl -s http://localhost:8881/overview | python -m json.tool | grep slots
+
+# Fix: bump taskmanager.numberOfTaskSlots in core compose, then:
+docker compose -f compose/docker-compose.core.yml up -d --no-deps \
+    --force-recreate flink-taskmanager
+bash scripts/init_flink.sh</code></pre></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" id="ts-3">
+          <div class="accordion-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="accordion-status warning"></div>
+            <div class="accordion-title">Flink Iceberg sink commits 0 rows to Iceberg</div>
+            <div class="accordion-chevron">▼</div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <p><strong>Cause:</strong> Checkpointing not enabled in the SQL Gateway session. Iceberg sink only commits on a successful checkpoint.</p>
+              <p style="margin-top: 8px;"><strong>Fix:</strong> The submitter (<code>scripts/flink/submit_flink_jobs.sh</code>) already sets checkpointing. If you ran jobs manually, add these session properties:</p>
+              <div class="code-block"><div class="code-block-header"><span class="code-lang">json</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div><pre><code>{
+  "execution.checkpointing.interval": "30s",
+  "execution.checkpointing.mode": "EXACTLY_ONCE",
+  "state.backend.type": "hashmap",
+  "state.checkpoints.dir": "file:///tmp/flink-checkpoints"
+}</code></pre></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" id="ts-4">
+          <div class="accordion-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="accordion-status error"></div>
+            <div class="accordion-title">Trino: Access Denied — Cannot execute query</div>
+            <div class="accordion-chevron">▼</div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <p><strong>Cause:</strong> Using a user not in <code>trino/etc/rules.json</code>.</p>
+              <p style="margin-top: 8px;"><strong>Fix:</strong> Use an allowed user: <code>root</code>, <code>ebc_admin</code>, <code>ebc_user</code>, <code>ebc_engineer</code>, or <code>ebc_bi</code>.</p>
+              <div class="code-block"><div class="code-block-header"><span class="code-lang">bash</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div><pre><code>docker exec -e JAVA_TOOL_OPTIONS= ebc-trino \
+    trino --user ebc_user --catalog iceberg --schema bronze \
+    --execute "SELECT COUNT(*) FROM ach_transactions"</code></pre></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" id="ts-5">
+          <div class="accordion-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="accordion-status info"></div>
+            <div class="accordion-title">Bronze tables stay empty</div>
+            <div class="accordion-chevron">▼</div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <p>Check in this order:</p>
+              <div class="code-block"><div class="code-block-header"><span class="code-lang">bash</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div><pre><code># 1. Source DB has rows?
+docker exec ebc-postgres-src psql -U ebc_src -d ebc_sources \
+    -c "SELECT COUNT(*) FROM ach_transactions"
+
+# 2. Flink CDC source job RUNNING?
+curl -s http://localhost:8881/jobs/overview | grep -A1 kafka_ach_sink
+
+# 3. Kafka topic has messages?
+docker exec ebc-kafka kafka-get-offsets --bootstrap-server localhost:29092 \
+    --topic ebc.public.ach_transactions
+
+# 4. Flink Iceberg sink job RUNNING + checkpointing?
+curl -s http://localhost:8881/jobs/overview | grep polaris.bronze.ach</code></pre></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" id="ts-6">
+          <div class="accordion-header" tabindex="0" role="button" aria-expanded="false">
+            <div class="accordion-status info"></div>
+            <div class="accordion-title">Full reset — re-bootstrap the entire data plane</div>
+            <div class="accordion-chevron">▼</div>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <div class="code-block"><div class="code-block-header"><span class="code-lang">bash</span><button class="code-copy-btn" data-action="copy-code">Copy</button></div><pre><code>docker compose down -v                    # delete all volumes
+docker network rm ebc-lakehouse-network   # delete the bridge
+bash scripts/init_all.sh                  # full clean rebuild</code></pre></div>
+              <p style="margin-top: 8px;">This is the only reliable way to recover from a corrupted Polaris realm or a Kafka cluster ID mismatch.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- ======== SECTION 9: DATA DICTIONARY ======== -->
+    <section class="section" id="data-dictionary">
+      <div class="section-label">Deep Dives</div>
+      <h2 class="reveal">Data Dictionary</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        Schemas, columns, types, and descriptions for all core tables in the EBC Medallion Lakehouse.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 32px; margin-top: 32px;" class="reveal reveal-delay-2">
+        <!-- ACH -->
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">🥉 Table: <code>bronze.ach_transactions</code></h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Raw transaction logs streamed from the ACH (Automated Clearing House) logical database slots in PostgreSQL.
+          </p>
+          <div class="data-table-wrapper" style="margin: 0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>txn_id</code></td><td><code>VARCHAR</code> (PK)</td><td>Unique Automated Clearing House transaction identifier.</td></tr>
+                <tr><td><code>originator_bank_id</code></td><td><code>VARCHAR</code></td><td>BIC identifier of the bank sending the fund transfer.</td></tr>
+                <tr><td><code>receiver_bank_id</code></td><td><code>VARCHAR</code></td><td>BIC identifier of the bank receiving the fund transfer.</td></tr>
+                <tr><td><code>amount</code></td><td><code>DOUBLE</code></td><td>Transaction monetary value in Egyptian Pounds (EGP).</td></tr>
+                <tr><td><code>status</code></td><td><code>VARCHAR</code></td><td>Status of the transaction (e.g. SETTLED, REJECTED, PENDING).</td></tr>
+                <tr><td><code>created_at</code></td><td><code>TIMESTAMP</code></td><td>Timestamp when transaction was written to source database.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Meeza Authorisations -->
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">🥉 Table: <code>bronze.meeza_authorisations</code></h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Real-time authorization events captured from Meeza card rails logical slot.
+          </p>
+          <div class="data-table-wrapper" style="margin: 0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>auth_id</code></td><td><code>VARCHAR</code> (PK)</td><td>Unique authorization request identifier.</td></tr>
+                <tr><td><code>card_token</code></td><td><code>VARCHAR</code></td><td>Tokenized card identifier for security compliance.</td></tr>
+                <tr><td><code>terminal_id</code></td><td><code>VARCHAR</code></td><td>ID of POS terminal or ATM where card was swiped.</td></tr>
+                <tr><td><code>amount</code></td><td><code>DOUBLE</code></td><td>Authorized transaction amount in EGP.</td></tr>
+                <tr><td><code>response_code</code></td><td><code>VARCHAR</code></td><td>ISO 8583 response code (e.g. 00 for Approved, 51 for Insufficient Funds).</td></tr>
+                <tr><td><code>auth_timestamp</code></td><td><code>TIMESTAMP</code></td><td>Timestamp of authorization capture.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- IPN Transactions -->
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">🥉 Table: <code>bronze.ipn_transactions</code></h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Instant Payment Network (InstaPay) transaction telemetry capture.
+          </p>
+          <div class="data-table-wrapper" style="margin: 0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>txn_id</code></td><td><code>VARCHAR</code> (PK)</td><td>Unique instant payment network transaction identifier.</td></tr>
+                <tr><td><code>sender_ipa</code></td><td><code>VARCHAR</code></td><td>Instant Payment Address of sender (e.g. user@instapay).</td></tr>
+                <tr><td><code>receiver_ipa</code></td><td><code>VARCHAR</code></td><td>Instant Payment Address of receiver.</td></tr>
+                <tr><td><code>amount</code></td><td><code>DOUBLE</code></td><td>Transaction amount in EGP.</td></tr>
+                <tr><td><code>response_time_ms</code></td><td><code>INTEGER</code></td><td>Network latency in milliseconds to complete transaction.</td></tr>
+                <tr><td><code>initiated_at</code></td><td><code>TIMESTAMP</code></td><td>Timestamp when InstaPay transaction was initiated.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Wallet Events -->
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">🥉 Table: <code>bronze.wallet_events</code></h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Digital Wallet activities (transfers, cash-in, cash-out) captured from MongoDB Change Streams.
+          </p>
+          <div class="data-table-wrapper" style="margin: 0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>_id</code></td><td><code>VARCHAR</code> (PK)</td><td>MongoDB ObjectId identifier in string representation.</td></tr>
+                <tr><td><code>wallet_id</code></td><td><code>VARCHAR</code></td><td>Unique mobile wallet account identifier.</td></tr>
+                <tr><td><code>event_type</code></td><td><code>VARCHAR</code></td><td>Type of event (e.g. CASH_IN, CASH_OUT, TRANSFER).</td></tr>
+                <tr><td><code>amount</code></td><td><code>DOUBLE</code></td><td>Event monetary amount in EGP.</td></tr>
+                <tr><td><code>event_ts</code></td><td><code>TIMESTAMP</code></td><td>Oplog event timestamp converted to database timestamp.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ATM Sessions -->
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">🥉 Table: <code>bronze.atm_sessions</code></h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            ATM session metrics and connection states captured from MS SQL Server CDC Agent.
+          </p>
+          <div class="data-table-wrapper" style="margin: 0;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>atm_id</code></td><td><code>VARCHAR</code> (PK)</td><td>ATM terminal identification number.</td></tr>
+                <tr><td><code>session_id</code></td><td><code>VARCHAR</code> (PK)</td><td>Unique telemetry session ID.</td></tr>
+                <tr><td><code>network_id</code></td><td><code>VARCHAR</code></td><td>Network operator identifier.</td></tr>
+                <tr><td><code>txn_status</code></td><td><code>VARCHAR</code></td><td>Status of transaction attempted during session.</td></tr>
+                <tr><td><code>updated_at</code></td><td><code>TIMESTAMP</code></td><td>State change timestamp.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== SECTION 10: ONBOARDING ======== -->
+    <section class="section" id="onboarding">
+      <div class="section-label">Reference</div>
+      <h2 class="reveal">Onboarding Guide</h2>
+      <p class="subtitle reveal reveal-delay-1">
+        A step-by-step developer checklist for local setup, running diagnostics, and adding analytics logic.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 24px; margin-top: 32px;" class="reveal reveal-delay-2">
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">🚀 Quick Start Checklist</h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+            Follow this sequence to spin up and verify your local EBC Lakehouse replica:
+          </p>
+          <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-secondary); line-height: 1.8;">
+            <li>Clone the repository and ensure your Docker engine has at least <strong>12 GB of RAM</strong> allocated.</li>
+            <li>Run <code>bash scripts/init_all.sh</code> to bootstrap all core, source, and governance containers.</li>
+            <li>Verify all 10 Flink CDC and Iceberg sink jobs are running at the <a href="http://localhost:8881" target="_blank">Flink Dashboard</a>.</li>
+            <li>Trigger the dbt medallion pipeline: <code>docker exec ebc-airflow-webserver airflow dags trigger ebc_dbt_silver</code>.</li>
+            <li>Run <code>bash scripts/verify.sh</code> to confirm matching row counts across Bronze, Silver, Gold, and Serving namespaces.</li>
+          </ul>
+        </div>
+
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">📊 Querying the Lakehouse</h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+            Query all Iceberg layers interactively using the Trino SQL CLI:
+          </p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-lang">bash</span></div>
+            <pre><code># Launch Trino CLI session
+docker exec -it ebc-trino trino --user ebc_user --catalog iceberg --schema serving
+
+# Check daily transaction aggregates
+trino:serving&gt; SELECT * FROM daily_txn_volume LIMIT 5;</code></pre>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <h3 style="margin-bottom: 12px;">🔧 How to Add a New dbt Transformation Model</h3>
+          <ol style="margin-top: 8px; padding-left: 20px; color: var(--text-secondary); line-height: 1.8;">
+            <li>Create your model SQL file inside the target directory: <code>dbt/ebc_lakehouse/models/&lt;layer&gt;/&lt;model_name&gt;.sql</code>.</li>
+            <li>Reference source tables using the ref macro: <code>FROM {{ ref('stg_ach_transactions') }}</code>.</li>
+            <li>Run transformations locally through Trino using docker:
+              <div class="code-block"><pre><code>docker exec -it ebc-airflow-webserver dbt run --select &lt;model_name&gt; --profiles-dir /opt/airflow/dbt</code></pre></div>
+            </li>
+            <li>Add schema tests in the layer's <code>schema.yml</code> to audit unique keys and null violations.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

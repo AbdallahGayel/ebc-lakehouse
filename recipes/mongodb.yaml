@@ -1,0 +1,22 @@
+source:
+    type: mongodb
+    config:
+        connect_uri: 'mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true'
+        username: '${MONGO_USERNAME}'
+        password: '${MONGO_PASSWORD}'
+        enableSchemaInference: true
+        useRandomSampling: true
+        maxSchemaSize: 300
+        stateful_ingestion:
+            enabled: true
+            state_provider:
+                type: datahub
+                config:
+                    datahub_api:
+                        server: "http://datahub-gms:8080"
+sink:
+    type: datahub-rest
+    config:
+        server: 'http://datahub-gms:8080'
+
+pipeline_name: ebc_mongodb_ingestion

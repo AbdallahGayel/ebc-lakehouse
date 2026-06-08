@@ -1,0 +1,36 @@
+-- =============================================================================
+-- 10_bronze_reference.sql
+--
+-- Bronze tables are NOT pre-created by this init script. They are
+-- exclusively owned by the Kafka Connect Iceberg Sink connectors
+-- (kafka/connectors/iceberg-sink-*.json), which:
+--
+--   • auto-create the table on first batch flush
+--     (iceberg.tables.auto-create-enabled=true)
+--   • evolve the schema in-place when a new column appears
+--     (iceberg.tables.evolve-schema-enabled=true)
+--   • derive the column types from the Avro schema in the Schema Registry,
+--     which itself is registered by Debezium
+--
+-- Pre-creating a Bronze table here with a guessed schema would conflict with
+-- the connector's expected DDL on first flush. We document the expected
+-- shape below for reference only.
+--
+-- Expected layout (post-first-flush):
+--   iceberg.bronze.ach_transactions             ← from ebc.public.ach_transactions
+--   iceberg.bronze.meeza_authorisations         ← from ebc.public.meeza_authorisations
+--   iceberg.bronze.ipn_transactions             ← from ebc.public.ipn_transactions
+--   iceberg.bronze.meeza_digital_wallet_events  ← from ebc.meeza_digital.wallet_events
+--   iceberg.bronze.atm_sessions                 ← from ebc.dbo.atm_sessions
+--                                                 (Flink CDC sqlserver-cdc; replaces Cassandra)
+--
+-- Partitioning convention (set per-connector via
+-- iceberg.table.bronze.<name>.partition-by):
+--   days(<event_timestamp_column>)
+--
+-- All Bronze tables carry the Debezium CDC envelope columns:
+--   __op       VARCHAR  -- 'c'reate / 'u'pdate / 'd'elete / 'r'ead-snapshot
+--   __ts_ms    BIGINT   -- source-system event time in epoch milliseconds
+--
+-- ── No-op marker (idempotent; the runner skips empty effects) ────────────
+SELECT 'bronze ownership = kafka-connect (no DDL emitted)' AS status;

@@ -1,0 +1,161 @@
+# =============================================================================
+# compose/docker-compose.sources.yml
+# EBC Lakehouse — DATA SOURCES module
+#
+# Operational source systems. After the Flink CDC migration, every source is
+# tailed by a Flink CDC connector (Postgres WAL, MongoDB oplog, SQL Server
+# CDC capture instance) — there is no Kafka Connect / Debezium worker.
+#
+# Includes:
+#   • PostgreSQL 16   — logical replication enabled (3 tables, Flink CDC postgres-cdc)
+#   • MongoDB 7       — replica set rs0 (Flink CDC mongodb-cdc)
+#   • MS SQL Server 2022 — CDC-enabled (Flink CDC sqlserver-cdc); replaces Cassandra
+#
+# ── Extensibility contract ───────────────────────────────────────────────────
+# To add a new source (Oracle, MySQL, REST API, …):
+#   1. Append a service block. The service MUST:
+#        - join the default network (inherited automatically),
+#        - expose a stable container hostname (used by the Flink CDC source DDL
+#          in ../flink/jobs/),
+#        - declare a healthcheck so scripts/init_sources.sh can gate on it,
+#        - mount its bootstrap SQL/scripts under whatever init mechanism
+#          the image supports.
+#   2. Drop a Flink CDC SQL job into ../flink/jobs/1?_cdc_<source>.sql with
+#      a matching upsert-kafka sink targeting an existing Bronze topic.
+#   3. Drop a matching Iceberg sink job into ../flink/jobs/2?_sink_<table>.sql
+#      that consumes from that Kafka topic and writes to bronze.<table>.
+#   4. (Optional) Add a dbt source entry in
+#      dbt/ebc_lakehouse/models/sources.yml so dbt-trino can ref the new Bronze.
+#   5. Re-run scripts/init_sources.sh + scripts/init_flink.sh.
+# ─────────────────────────────────────────────────────────────────────────────
+# =============================================================================
+
+services:
+  # ── PostgreSQL Source Systems (ACH, Meeza, IPN) ───────────────────────────
+  postgres-src:
+    image: postgres:16
+    container_name: ebc-postgres-src
+    command: >
+      postgres
+        -c wal_level=logical
+        -c max_replication_slots=10
+        -c max_wal_senders=10
+        -c wal_keep_size=1024
+    environment:
+      POSTGRES_USER:     ebc_src
+      POSTGRES_PASSWORD: ebc_src_pass
+      POSTGRES_DB:       ebc_sources
+    ports:
+      - '5433:5432'
+    volumes:
+      - ../postgres/init:/docker-entrypoint-initdb.d
+      - postgres-src-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ebc_src -d ebc_sources']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  # ── MongoDB 7 (Meeza Digital wallet events) ───────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    container_name: ebc-mongodb
+    command: mongod --replSet rs0 --bind_ip_all
+    ports:
+      - '27017:27017'
+    volumes:
+      - ../mongodb/init:/docker-entrypoint-initdb.d
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping").ok']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # One-shot rs0 initiator — required before Flink CDC mongodb-cdc can tail
+  # the oplog. Replica set is still needed even without Debezium.
+  mongodb-init:
+    image: mongo:7.0
+    container_name: ebc-mongodb-init
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    entrypoint: >
+      mongosh --host mongodb:27017 --quiet --eval '
+        try {
+          rs.initiate({_id:"rs0",members:[{_id:0,host:"mongodb:27017"}]});
+          print("rs0 initiated");
+        } catch(e) {
+          if (e.codeName=="AlreadyInitialized") print("rs0 already initialised");
+          else throw e;
+        }
+        let t=0;
+        while(rs.status().myState!==1 && t<20){sleep(500);t++;}
+        print("Primary ready. State=" + rs.status().myState);
+      '
+    restart: on-failure
+
+  # ── Microsoft SQL Server 2022 (ATM / 123 Network — replaces Cassandra) ────
+  # Why SQL Server: Cassandra has no log-based CDC connector in Flink CDC.
+  # SQL Server's CDC capture instance is first-class in Flink (sqlserver-cdc),
+  # which lets us delete the residual Kafka Connect worker entirely.
+  #
+  # Image: mcr.microsoft.com/mssql/server:2022-latest (Developer edition —
+  #   free for dev, includes CDC; production needs Standard or Enterprise).
+  #
+  # SQL Server CDC requires SQL Server Agent. The Developer image starts it
+  # automatically; we just enable CDC at the DB + table level via mssql-init.
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ebc-mssql
+    user: root        # the image needs root to enable Agent on first start
+    environment:
+      ACCEPT_EULA:          'Y'
+      MSSQL_PID:            'Developer'
+      MSSQL_SA_PASSWORD:    'EbcAtm_S3cret!'
+      MSSQL_AGENT_ENABLED:  'true'        # required for CDC capture jobs
+    ports:
+      - '1433:1433'
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      # /opt/mssql-tools18 is the path in 2022-latest; -C accepts the
+      # self-signed cert so the check works without a CA roundtrip.
+      test: ['CMD-SHELL', '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  # One-shot init container — runs the four SQL files (create DB, table,
+  # enable CDC, seed) once SQL Server itself is up.
+  mssql-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: ebc-mssql-init
+    depends_on:
+      mssql:
+        condition: service_healthy
+    volumes:
+      - ../mssql/init:/init:ro
+    entrypoint: >
+      bash -c "
+        for f in /init/*.sql; do
+          echo '── applying '$$f' ──';
+          /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P \"EbcAtm_S3cret!\" -i \"$$f\" -b || exit 1;
+        done;
+        echo 'mssql-init complete'
+      "
+    restart: on-failure
+
+
+volumes:
+  postgres-src-data:
+  mongodb-data:
+  mssql-data:
+
+networks:
+  default:
+    name: ebc-lakehouse-network
+    external: true

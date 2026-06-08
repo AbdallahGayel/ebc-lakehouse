@@ -1,0 +1,38 @@
+# =============================================================================
+# dbt/ebc_lakehouse/profiles.yml
+# dbt-trino adapter targeting the Polaris-backed Iceberg catalog.
+#
+# `catalog` ↔ Trino catalog (always "iceberg" — defined in
+# trino/etc/catalog/iceberg.properties → wired to Polaris).
+# `schema`  ↔ Iceberg namespace inside the catalog. Silver is the default;
+# Gold / Serving / Semantic schemas are selected per model via
+# `+schema:` in dbt_project.yml or `{{ config(schema='gold') }}`.
+# =============================================================================
+ebc_lakehouse:
+  target: dev
+  outputs:
+    dev:
+      type: trino
+      method: none                # No auth: single-tenant local Trino
+      user:     ebc_user
+      host:     trino
+      port:     8080
+      database: iceberg           # Trino catalog name
+      schema:   silver        # Default Iceberg namespace
+      http_scheme: http
+      threads:  4
+      session_properties:
+        query_max_run_time: 30m
+
+    prod:
+      type: trino
+      method: oauth2
+      user:     "{{ env_var('TRINO_USER') }}"
+      host:     "{{ env_var('TRINO_HOST') }}"
+      port:     "{{ env_var('TRINO_PORT', '443') | int }}"
+      database: "{{ env_var('TRINO_CATALOG', 'iceberg') }}"
+      schema:   silver
+      http_scheme: https
+      threads:  8
+      session_properties:
+        query_max_run_time: 60m

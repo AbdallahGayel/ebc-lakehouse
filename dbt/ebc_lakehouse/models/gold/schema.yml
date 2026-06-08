@@ -1,0 +1,68 @@
+# dbt/ebc_lakehouse/models/gold/schema.yml
+version: 2
+
+models:
+  - name: mart_daily_txn_volume
+    description: "Daily transaction volume by scheme across all EBC payment rails"
+    columns:
+      - name: report_date
+        tests: [not_null]
+      - name: scheme
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EG-ACH', 'MEEZA', 'IPN-INSTAPAY', 'MEEZA-DIGITAL', '123-ATM-NETWORK']
+      - name: txn_count
+        tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0, inclusive: true }
+      - name: total_amount_egp
+        tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0, inclusive: true }
+      - name: approved_count
+        tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0, inclusive: true }
+      - name: failed_count
+        tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0, inclusive: true }
+      - name: avg_txn_amount_egp
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, inclusive: true }
+
+  - name: mart_scheme_performance
+    description: "Per-scheme per-channel approval rates and IPN SLA metrics"
+    columns:
+      - name: report_date
+        tests: [not_null]
+      - name: scheme
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EG-ACH', 'MEEZA', 'IPN-INSTAPAY', 'MEEZA-DIGITAL', '123-ATM-NETWORK']
+      - name: channel
+        tests: [not_null]
+      - name: txn_volume
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, inclusive: true }
+      - name: approval_rate_pct
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 100, inclusive: true }
+      - name: avg_processing_ms
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, inclusive: true }
+
+  - name: mart_settlement_summary
+    description: "Daily net settlement position per bank pair for EG-ACH"
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: originating_bank_id
+        tests: [not_null]
+      - name: receiving_bank_id
+        tests: [not_null]
+      - name: settlement_rate_pct
+        tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 100, inclusive: true }

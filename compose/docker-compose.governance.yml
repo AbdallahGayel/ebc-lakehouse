@@ -1,0 +1,294 @@
+# =============================================================================
+# compose/docker-compose.governance.yml
+# EBC Lakehouse — DATA GOVERNANCE & BI module
+#
+# Metadata catalog (DataHub) + business-intelligence (Superset). Both consume
+# from the Core module — DataHub ingests Trino + Polaris + Kafka + Postgres,
+# Superset queries Trino via the trino:// SQLAlchemy dialect. Neither service
+# is referenced by Core or Sources, so this module can be added / removed /
+# upgraded independently.
+#
+# Includes:
+#   • Redis (Superset cache + Celery broker)
+#   • Apache Superset 4.1 (init / web / worker)
+#   • DataHub 1.5 (MySQL, Elasticsearch, GMS, System Update, Frontend, Actions)
+#   • OpenLineage → DataHub bridge
+#
+# ── Extensibility contract ──────────────────────────────────────────────────
+# To add a new BI tool (Metabase, Lightdash, Apache Hue, …):
+#   1. Append a service block to this file. It MUST:
+#        - join the default external network
+#        - connect to Trino at `trino:8080` (no auth in dev)
+#        - own its own metadata DB volume (don't share Superset's)
+#   2. (Optional) Pre-register Trino as a data source via the BI tool's own
+#      bootstrap mechanism — model after superset/register_databases.py.
+#
+# To add a new metadata source for DataHub:
+#   1. Drop a recipe YAML into ../recipes/<name>.yaml (model after
+#      recipes/trino.yaml).
+#   2. Add an ingestion DAG / cron / one-shot invocation:
+#        datahub ingest -c recipes/<name>.yaml
+# ────────────────────────────────────────────────────────────────────────────
+# =============================================================================
+
+# ── Superset shared config ────────────────────────────────────────────────────
+x-superset-common: &superset-common
+  build: ../superset
+  environment: &superset-env
+    SUPERSET_SECRET_KEY: 'ebc_superset_secret_change_in_prod'
+    DATABASE_HOST:       postgres-meta        # ← lives in the Core module
+    DATABASE_PORT:       '5432'
+    DATABASE_USER:       airflow
+    DATABASE_PASSWORD:   airflow
+    DATABASE_DB:         superset
+    REDIS_HOST:          redis
+    REDIS_PORT:          '6379'
+    FLASK_ENV:           production
+    TRINO_HOST:          trino                # ← Core module
+    TRINO_PORT:          '8080'
+    TRINO_USER:          ebc_user
+    TRINO_CATALOG:       iceberg
+
+services:
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: ebc-redis
+    command: >
+      redis-server
+        --save ""
+        --appendonly no
+        --maxmemory 512mb
+        --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Superset ──────────────────────────────────────────────────────────────
+  superset-init:
+    <<: *superset-common
+    container_name: ebc-superset-init
+    command: ['init']
+    volumes:
+      - ../superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+      - ../superset/register_databases.py:/app/register_databases.py:ro
+    restart: 'no'
+
+  superset:
+    <<: *superset-common
+    container_name: ebc-superset
+    command: ['app-gunicorn']
+    ports:
+      - '8088:8088'
+    volumes:
+      - superset-data:/app/superset_home
+      - ../superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      superset-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8088/health']
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 60s
+    restart: on-failure
+
+  superset-worker:
+    <<: *superset-common
+    container_name: ebc-superset-worker
+    command: ['worker']
+    volumes:
+      - superset-data:/app/superset_home
+      - ../superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      superset-init:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  # ── DataHub MySQL ─────────────────────────────────────────────────────────
+  datahub-mysql:
+    image: mysql:8.2
+    container_name: ebc-datahub-mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_bin
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE:      datahub
+      MYSQL_USER:          datahub
+      MYSQL_PASSWORD:      datahub
+      MYSQL_ROOT_PASSWORD: datahub_root
+    volumes:
+      - datahub-mysql-data:/var/lib/mysql
+      - ../observability/datahub/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'datahub', '-pdatahub']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── DataHub Elasticsearch ─────────────────────────────────────────────────
+  datahub-elasticsearch:
+    image: elasticsearch:7.17.14
+    container_name: ebc-datahub-es
+    environment:
+      discovery.type:         single-node
+      xpack.security.enabled: 'false'
+      ES_JAVA_OPTS:           '-Xms512m -Xmx1g'
+    volumes:
+      - datahub-es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:9200/_cluster/health || exit 1']
+      interval: 20s
+      timeout: 10s
+      retries: 10
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }
+
+  # ── DataHub GMS ───────────────────────────────────────────────────────────
+  datahub-gms:
+    image: acryldata/datahub-gms:v1.5.0.3
+    container_name: ebc-datahub-gms
+    ports:
+      - '8082:8080'
+    env_file:
+      - ../.env
+    environment:
+      EBEAN_DATASOURCE_DRIVER:    com.mysql.cj.jdbc.Driver
+      EBEAN_DATASOURCE_USERNAME:  datahub
+      EBEAN_DATASOURCE_PASSWORD:  datahub
+      EBEAN_DATASOURCE_HOST:      datahub-mysql:3306
+      EBEAN_DATASOURCE_URL:       'jdbc:mysql://datahub-mysql:3306/datahub?allowPublicKeyRetrieval=true&useSSL=false'
+      KAFKA_BOOTSTRAP_SERVER:     kafka:29092           # ← Core module
+      KAFKA_SCHEMAREGISTRY_URL:   http://schema-registry:8081
+      ELASTICSEARCH_HOST:         datahub-elasticsearch
+      ELASTICSEARCH_PORT:         9200
+      ELASTICSEARCH_PROTOCOL:     http
+      GRAPH_SERVICE_IMPL:         elasticsearch
+      DATAHUB_GMS_HOST:           datahub-gms
+      DATAHUB_GMS_PORT:           8080
+      AUTHENTICATION_ENABLED:                              'false'
+      METADATA_SERVICE_AUTH_ENABLED:                       'false'
+      AUTHORIZATION_DEFAULT_AUTHORIZER_ENABLED:            'true'
+      AUTHORIZATION_DEFAULT_AUTHORIZER_CACHE_REFRESH_INTERVAL_SECS: '120'
+      MAE_CONSUMER_ENABLED:                                'true'
+      MCL_CONSUMER_ENABLED:                                'true'
+      AUTHENTICATION_TOKENSERVICE_SIGNINGKEY: 'WnEdIeTG/VVCLQqGwC/BAkqyY0k+H8NEAtWGejrBI94='
+      AUTHENTICATION_TOKENSERVICE_SALT:       'EBCDataHubSalt2025'
+      DATAHUB_SYSTEM_CLIENT_ID:               '__datahub_system'
+      DATAHUB_SYSTEM_CLIENT_SECRET:           'JohnSnowKnowsNothing'
+      DATAHUB_SERVER_TYPE:                    prod
+      CONFIGENTITYREGISTRY_PATH:              /datahub/datahub-gms/resources/entity-registry.yml
+    depends_on:
+      datahub-mysql:
+        condition: service_healthy
+      datahub-elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/health']
+      interval: 30s
+      timeout: 15s
+      retries: 20
+      start_period: 300s
+    restart: on-failure
+
+  # ── DataHub SystemUpdate ──────────────────────────────────────────────────
+  datahub-upgrade:
+    image: acryldata/datahub-upgrade:v1.5.0.3
+    container_name: ebc-datahub-upgrade
+    command: ['-u', 'SystemUpdate']
+    depends_on:
+      datahub-gms:
+        condition: service_healthy
+    environment:
+      EBEAN_DATASOURCE_DRIVER:    com.mysql.cj.jdbc.Driver
+      EBEAN_DATASOURCE_USERNAME:  datahub
+      EBEAN_DATASOURCE_PASSWORD:  datahub
+      EBEAN_DATASOURCE_HOST:      datahub-mysql:3306
+      EBEAN_DATASOURCE_URL:       'jdbc:mysql://datahub-mysql:3306/datahub?allowPublicKeyRetrieval=true&useSSL=false'
+      ELASTICSEARCH_HOST:         datahub-elasticsearch
+      ELASTICSEARCH_PORT:         9200
+      ELASTICSEARCH_PROTOCOL:     http
+      GRAPH_SERVICE_IMPL:         elasticsearch
+      KAFKA_BOOTSTRAP_SERVER:     kafka:29092
+      KAFKA_SCHEMAREGISTRY_URL:   http://schema-registry:8081
+      AUTHENTICATION_TOKENSERVICE_SIGNINGKEY: 'WnEdIeTG/VVCLQqGwC/BAkqyY0k+H8NEAtWGejrBI94='
+      AUTHENTICATION_TOKENSERVICE_SALT:       'EBCDataHubSalt2025'
+      CONFIGENTITYREGISTRY_PATH:              /datahub/datahub-gms/resources/entity-registry.yml
+
+  # ── DataHub Frontend ──────────────────────────────────────────────────────
+  datahub-frontend:
+    image: acryldata/datahub-frontend-react:v1.5.0.3
+    container_name: ebc-datahub-frontend
+    environment:
+      DATAHUB_GMS_HOST:                 datahub-gms
+      DATAHUB_GMS_PORT:                 8080
+      DATAHUB_SECRET:                   EBCDataHubSecret2025
+      DATAHUB_PLAY_APPLICATION_SECRET:  '7bebb0681188c80440e5627cdbdc6ac8bdb475217b23c55a9458de5e156967db'
+      DATAHUB_APP_VERSION:              1
+      DATAHUB_ANALYTICS_ENABLED:        'true'
+      KAFKA_BOOTSTRAP_SERVER:           kafka:29092
+    depends_on:
+      datahub-gms:
+        condition: service_healthy
+    ports:
+      - '9002:9002'
+    restart: on-failure
+
+  # ── DataHub Actions ───────────────────────────────────────────────────────
+  datahub-actions:
+    image: acryldata/datahub-actions:v1.5.0.3
+    container_name: ebc-datahub-actions
+    environment:
+      DATAHUB_GMS_HOST:             datahub-gms
+      DATAHUB_GMS_PORT:             8080
+      DATAHUB_GMS_PROTOCOL:         http
+      KAFKA_BOOTSTRAP_SERVER:       kafka:29092
+      SCHEMA_REGISTRY_URL:          http://schema-registry:8081
+      DATAHUB_SYSTEM_CLIENT_ID:     '__datahub_system'
+      DATAHUB_SYSTEM_CLIENT_SECRET: 'JohnSnowKnowsNothing'
+    depends_on:
+      datahub-gms:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── OpenLineage → DataHub bridge ──────────────────────────────────────────
+  ol-datahub-bridge:
+    image: python:3.11-slim
+    container_name: ebc-ol-datahub-bridge
+    command: >
+      sh -c "pip install --quiet kafka-python requests &&
+             python /app/ol_to_datahub_bridge.py"
+    volumes:
+      - ../observability/ol_to_datahub_bridge.py:/app/ol_to_datahub_bridge.py:ro
+    environment:
+      KAFKA_BOOTSTRAP: kafka:29092
+      OL_KAFKA_TOPIC:  openlineage.events
+      DATAHUB_GMS_URL: http://datahub-gms:8080
+      POLL_INTERVAL_S: '30'
+    depends_on:
+      datahub-gms:
+        condition: service_healthy
+    restart: on-failure
+
+
+volumes:
+  redis-data:
+  superset-data:
+  datahub-mysql-data:
+  datahub-es-data:
+
+networks:
+  default:
+    name: ebc-lakehouse-network
+    external: true

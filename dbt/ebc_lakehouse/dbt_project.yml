@@ -1,0 +1,77 @@
+# =============================================================================
+# dbt/ebc_lakehouse/dbt_project.yml
+#
+# Trino + Iceberg (Polaris) configuration. Each model materialises as an
+# Iceberg table under its medallion namespace. Storage layout is enforced
+# by Polaris namespace `location` properties (init_polaris.py):
+#
+#   silver   →  s3://ebc-lakehouse/silver/<table>/
+#   gold     →  s3://ebc-lakehouse/gold/<table>/
+#   serving  →  s3://ebc-lakehouse/serving/<table>/
+#   ebc_semantic →  s3://ebc-lakehouse/serving/_semantic/<table>/  (shared)
+#
+# Partitioning convention (consistent across all dbt-managed layers):
+#   • silver   → days(<event_date_col>)  for time-series staging tables
+#   • gold     → months(<report_date>)   for aggregate marts (lower cardinality)
+#   • serving  → months(<report_date>)   to match Gold and keep snapshot prune
+#                cheap for the hourly MERGE refresh
+# =============================================================================
+name: 'ebc_lakehouse'
+version: '1.0.0'
+config-version: 2
+
+profile: 'ebc_lakehouse'
+model-paths:    ['models']
+macro-paths:    ['macros']
+test-paths:     ['tests']
+analysis-paths: ['analyses']
+seed-paths:     ['seeds']
+snapshot-paths: ['snapshots']
+
+clean-targets: ['target', 'dbt_packages']
+
+models:
+  ebc_lakehouse:
+    # Defaults — every model unless overridden is an Iceberg PARQUET table.
+    +materialized: table
+    +properties:
+      format:         "'PARQUET'"
+      format_version: "2"
+
+    silver:
+      +schema:               silver
+      +materialized:         incremental
+      +incremental_strategy: merge
+      +on_schema_change:     append_new_columns
+      +tags: ['silver', 'ebc']
+
+    gold:
+      +schema:       gold
+      +materialized: table
+      +tags: ['gold', 'ebc']
+
+    serving:
+      # Serving tables are MERGE-upserted by Airflow after every Gold run,
+      # so they're declared as `incremental` with merge strategy keyed on the
+      # natural business key.
+      +schema:               serving
+      +materialized:         incremental
+      +incremental_strategy: merge
+      +on_schema_change:     append_new_columns
+      +tags: ['serving', 'ebc']
+
+    semantic:
+      # MetricFlow objects live inside the Serving layer (single time-spine
+      # table + semantic models). Keeping them here preserves the strict
+      # 4-namespace storage model (bronze/silver/gold/serving) instead of
+      # introducing a separate ebc_semantic prefix.
+      +schema:       serving
+      +materialized: table
+      +tags: ['semantic', 'metricflow', 'serving']
+
+vars:
+  ebc_lakehouse:
+    bronze_db:  'bronze'
+    silver_db:  'silver'
+    gold_db:    'gold'
+    serving_db: 'serving'

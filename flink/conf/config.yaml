@@ -1,0 +1,70 @@
+# =============================================================================
+# flink/conf/config.yaml
+#
+# Flink 1.20+ uses YAML for the cluster config. Keep this lean — defaults
+# are sane for a single-JM / single-TM dev cluster running Iceberg sinks
+# on the existing ebc-lakehouse-network.
+# =============================================================================
+
+jobmanager:
+  rpc:
+    address: flink-jobmanager
+    port: 6123
+  bind-host: 0.0.0.0
+  memory:
+    process:
+      size: 1600m
+
+taskmanager:
+  bind-host: 0.0.0.0
+  host: flink-taskmanager
+  numberOfTaskSlots: 4
+  memory:
+    process:
+      size: 2048m
+
+parallelism:
+  default: 2
+
+rest:
+  address: 0.0.0.0
+  bind-address: 0.0.0.0
+  port: 8081
+
+# ── Iceberg / Polaris-friendly defaults ──────────────────────────────────────
+# Checkpointing on a 30s tick gives the Iceberg sink frequent commits, so the
+# Polaris snapshot graph stays tight and Trino sees fresh rows quickly. Tune
+# up to 60-120s in prod once volume is meaningful.
+execution:
+  checkpointing:
+    interval: 30 s
+    mode: EXACTLY_ONCE
+    timeout: 10 min
+    unaligned: false
+
+state:
+  backend:
+    type: rocksdb
+  checkpoints:
+    dir: file:///opt/flink/state/checkpoints
+  savepoints:
+    dir: file:///opt/flink/state/savepoints
+
+restart-strategy:
+  type: exponential-delay
+  exponential-delay:
+    initial-backoff: 10 s
+    max-backoff:     2 min
+    backoff-multiplier: 2.0
+    reset-backoff-threshold: 10 min
+    jitter-factor: 0.1
+
+# ── SQL Gateway ──────────────────────────────────────────────────────────────
+# Exposes a REST API on :8083 so external submitters (init_flink.sh) can
+# submit SQL statements without shelling into the JM container.
+sql-gateway:
+  endpoint:
+    rest:
+      address: 0.0.0.0
+      bind-address: 0.0.0.0
+      port: 8083

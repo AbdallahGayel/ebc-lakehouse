@@ -1,0 +1,90 @@
+# dbt/ebc_lakehouse/models/sources.yml
+#
+# Bronze sources for the Silver layer. Bronze tables are written by Flink
+# CDC + upsert-kafka and registered in Apache Polaris (Iceberg REST). Each
+# table contains the latest-state-per-PK; deletes are physically removed on
+# Iceberg compaction. No Debezium envelope columns (__op / __ts_ms) — the
+# upsert-kafka format carries the row payload directly.
+version: 2
+
+sources:
+  - name: bronze
+    database: iceberg               # Trino catalog → Polaris-backed
+    schema:   bronze
+    description: >
+      EBC raw Bronze layer — written continuously by Flink streaming jobs
+      (postgres-cdc, mongodb-cdc, sqlserver-cdc → upsert-kafka → Iceberg)
+      and registered in Apache Polaris. Queried via Trino's iceberg
+      connector; storage lives on MinIO under s3://ebc-lakehouse/bronze/.
+    freshness:
+      warn_after:  { count: 2,  period: hour }
+      error_after: { count: 24, period: hour }
+
+    tables:
+      - name: ach_transactions
+        loaded_at_field: "created_at"
+        description: "EG-ACH bank-to-bank transfers (PostgreSQL CDC)"
+        columns:
+          - name: txn_id
+            description: "UUID primary key from source system"
+            tests: [not_null]
+          - name: amount_egp
+            description: "Transaction amount in Egyptian Pounds"
+            tests: [not_null]
+          - name: txn_status
+            description: "PENDING / SETTLED / RETURNED / FAILED"
+          - name: settlement_date
+            description: "Date on which the transaction settles"
+          - name: created_at
+            description: "Source event-time — used as the Silver incremental watermark"
+
+      - name: meeza_authorisations
+        loaded_at_field: "auth_timestamp"
+        description: "Meeza card authorisations — tokenised, no raw PAN (PostgreSQL CDC)"
+        columns:
+          - name: auth_id
+            description: "UUID primary key"
+            tests: [not_null]
+          - name: response_code
+            description: "ISO 8583 response code: 00 = Approved"
+          - name: auth_status
+            description: "APPROVED / DECLINED / REVERSED"
+          - name: channel
+            description: "POS / ECOMMERCE / ATM / CONTACTLESS"
+          - name: auth_timestamp
+            description: "Source event-time — used as the Silver incremental watermark"
+
+      - name: ipn_transactions
+        loaded_at_field: "initiated_at"
+        description: "InstaPay real-time payments (PostgreSQL CDC)"
+        columns:
+          - name: txn_id
+            description: "UUID primary key"
+            tests: [not_null]
+          - name: payment_ref
+            description: "Unique IPN payment reference number"
+          - name: processing_time_ms
+            description: "End-to-end payment processing latency in milliseconds"
+          - name: initiated_at
+            description: "Source event-time — used as the Silver incremental watermark"
+
+      - name: meeza_digital_wallet_events
+        loaded_at_field: "event_ts"
+        description: "Meeza Digital wallet events (MongoDB CDC)"
+        columns:
+          - name: _id
+            description: "MongoDB document _id"
+            tests: [not_null]
+          - name: event_ts
+            description: "Source event-time — used as the Silver incremental watermark"
+
+      - name: atm_sessions
+        loaded_at_field: "updated_at"
+        description: "ATM network sessions (MS SQL Server CDC — replaces the retired Cassandra source)"
+        columns:
+          - name: atm_id
+            tests: [not_null]
+          - name: session_id
+            tests: [not_null]
+          - name: updated_at
+            description: "Source-side mutation timestamp — used as the Silver incremental watermark"

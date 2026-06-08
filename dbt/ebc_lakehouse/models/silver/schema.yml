@@ -1,0 +1,113 @@
+# dbt/ebc_lakehouse/models/silver/schema.yml
+#
+# Silver layer schema + tests. The Flink CDC + upsert-kafka pipeline writes
+# Bronze with the source row's natural shape (no Debezium envelope), so
+# Silver no longer carries cdc_operation / cdc_event_ts_ms — see each
+# stg_*.sql for the rationale.
+version: 2
+
+models:
+  - name: stg_ach_transactions
+    description: "Cleansed EG-ACH transactions — deduplicated on (txn_id) by source-time."
+    columns:
+      - name: txn_id
+        description: "Source primary key — must be unique_final and non-null"
+        tests: [unique_final, not_null]
+      - name: amount_egp
+        description: "Transaction amount in EGP — must be positive"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: false
+      - name: txn_type
+        tests:
+          - accepted_values:
+              values: ['CREDIT', 'DEBIT', 'RETURN']
+      - name: txn_status
+        tests:
+          - accepted_values:
+              values: ['PENDING', 'SETTLED', 'RETURNED', 'FAILED']
+      - name: settlement_date
+        tests: [not_null]
+      - name: originating_bank_id
+        tests: [not_null]
+      - name: source_created_at
+        description: "Event-time from the source row (used as the incremental watermark)"
+        tests: [not_null]
+
+  - name: stg_meeza_authorisations
+    description: "Cleansed Meeza card authorisation records — tokenised, no raw PAN"
+    columns:
+      - name: auth_id
+        tests: [unique_final, not_null]
+      - name: auth_status
+        tests:
+          - accepted_values:
+              values: ['APPROVED', 'DECLINED', 'REVERSED']
+      - name: channel
+        tests:
+          - accepted_values:
+              values: ['POS', 'ECOMMERCE', 'ATM', 'CONTACTLESS']
+      - name: is_approved
+        tests: [not_null]
+      - name: amount_egp
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: false
+      - name: auth_timestamp
+        tests: [not_null]
+
+  - name: stg_ipn_transactions
+    description: "Cleansed InstaPay IPN transactions — includes SLA flag"
+    columns:
+      - name: txn_id
+        tests: [unique_final, not_null]
+      - name: payment_ref
+        # No unique test: IPN allows repeat references on FAILED→retry flows.
+        tests: [not_null]
+      - name: txn_status
+        tests:
+          - accepted_values:
+              values: ['COMPLETED', 'FAILED', 'REVERSED', 'PROCESSING']
+      - name: processing_time_ms
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: met_sla
+        tests: [not_null]
+      - name: initiated_at
+        tests: [not_null]
+
+  - name: stg_meeza_digital_wallet
+    description: "Cleansed Meeza Digital wallet events from MongoDB CDC"
+    columns:
+      - name: document_id
+        tests: [unique_final, not_null]
+      - name: amount_egp
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: event_timestamp
+        tests: [not_null]
+
+  - name: stg_atm_sessions
+    description: "Cleansed ATM network sessions (SQL Server source)"
+    columns:
+      - name: session_id
+        tests: [not_null]
+      - name: atm_id
+        tests: [not_null]
+      - name: amount_egp
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: updated_ts
+        tests: [not_null]

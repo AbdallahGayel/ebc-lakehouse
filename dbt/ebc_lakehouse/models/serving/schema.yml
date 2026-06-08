@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: daily_txn_volume
+    description: >
+      Serving copy of mart_daily_txn_volume. MERGE-upserted on
+      (report_date, scheme) so the BI cache stays consistent on every
+      hourly Gold run.
+    columns:
+      - name: report_date
+        tests: [not_null]
+      - name: scheme
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EG-ACH', 'MEEZA', 'IPN-INSTAPAY', 'MEEZA-DIGITAL', '123-ATM-NETWORK']
+      - name: txn_count
+        tests: [not_null]
+      - name: refreshed_at
+        tests: [not_null]
+
+  - name: scheme_performance
+    description: >
+      Serving copy of mart_scheme_performance. MERGE-upserted on
+      (report_date, scheme, channel).
+    columns:
+      - name: report_date
+        tests: [not_null]
+      - name: scheme
+        tests: [not_null]
+      - name: channel
+        tests: [not_null]
+      - name: approval_rate_pct
+        tests: [not_null]
+      - name: refreshed_at
+        tests: [not_null]
+
+  - name: settlement_summary
+    description: >
+      Serving copy of mart_settlement_summary. MERGE-upserted on
+      (settlement_date, originating_bank_id, receiving_bank_id).
+    columns:
+      - name: settlement_date
+        tests: [not_null]
+      - name: originating_bank_id
+        tests: [not_null]
+      - name: receiving_bank_id
+        tests: [not_null]
+      - name: refreshed_at
+        tests: [not_null]
