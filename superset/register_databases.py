@@ -72,13 +72,13 @@ def main() -> None:
     try:
         from superset import create_app
         from superset.extensions import db
-        from superset.models.core import Database
     except ImportError as exc:
         print(f"ERROR: cannot import Superset — {exc}", file=sys.stderr)
         sys.exit(1)
 
     app = create_app()
     with app.app_context():
+        from superset.models.core import Database
         registered = skipped = 0
         for cfg in DATABASES:
             name = cfg["database_name"]
