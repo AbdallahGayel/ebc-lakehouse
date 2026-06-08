@@ -83,7 +83,7 @@ services:
     container_name: ebc-superset
     command: ['app-gunicorn']
     ports:
-      - '8088:8088'
+      - '127.0.0.1:8088:8088'
     volumes:
       - superset-data:/app/superset_home
       - ../superset/superset_config.py:/app/pythonpath/superset_config.py:ro
@@ -122,7 +122,7 @@ services:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_bin
     ports:
-      - '3306:3306'
+      - '127.0.0.1:3306:3306'
     environment:
       MYSQL_DATABASE:      datahub
       MYSQL_USER:          datahub
@@ -160,7 +160,7 @@ services:
     image: acryldata/datahub-gms:v1.5.0.3
     container_name: ebc-datahub-gms
     ports:
-      - '8082:8080'
+      - '127.0.0.1:8082:8080'
     env_file:
       - ../.env
     environment:
@@ -242,7 +242,7 @@ services:
       datahub-gms:
         condition: service_healthy
     ports:
-      - '9002:9002'
+      - '127.0.0.1:9002:9002'
     restart: on-failure
 
   # ── DataHub Actions ───────────────────────────────────────────────────────

@@ -46,7 +46,7 @@ services:
       POSTGRES_PASSWORD: ebc_src_pass
       POSTGRES_DB:       ebc_sources
     ports:
-      - '5433:5432'
+      - '127.0.0.1:5433:5432'
     volumes:
       - ../postgres/init:/docker-entrypoint-initdb.d
       - postgres-src-data:/var/lib/postgresql/data
@@ -63,7 +63,7 @@ services:
     container_name: ebc-mongodb
     command: mongod --replSet rs0 --bind_ip_all
     ports:
-      - '27017:27017'
+      - '127.0.0.1:27017:27017'
     volumes:
       - ../mongodb/init:/docker-entrypoint-initdb.d
       - mongodb-data:/data/db
@@ -117,7 +117,7 @@ services:
       MSSQL_SA_PASSWORD:    'EbcAtm_S3cret!'
       MSSQL_AGENT_ENABLED:  'true'        # required for CDC capture jobs
     ports:
-      - '1433:1433'
+      - '127.0.0.1:1433:1433'
     volumes:
       - mssql-data:/var/opt/mssql
     healthcheck:

@@ -78,7 +78,7 @@ services:
     container_name: ebc-kafka
     hostname: kafka
     ports:
-      - '9092:9092'
+      - '127.0.0.1:9092:9092'
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: 'broker,controller'
@@ -117,7 +117,7 @@ services:
       kafka:
         condition: service_healthy
     ports:
-      - '8081:8081'
+      - '127.0.0.1:8081:8081'
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
@@ -154,7 +154,7 @@ services:
       # host:container — Flink's REST/Web port inside the container is the
       # default 8081 (we don't override `rest.port`). Expose it on host
       # 8881 to avoid colliding with anything else the user runs on 8081.
-      - '8881:8081'
+      - '127.0.0.1:8881:8081'
     environment:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: flink-jobmanager
@@ -212,7 +212,7 @@ services:
         condition: service_healthy
     ports:
       # host:container
-      - '8883:8083'
+      - '127.0.0.1:8883:8083'
     environment:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: flink-jobmanager
@@ -256,7 +256,7 @@ services:
       kafka:
         condition: service_healthy
     ports:
-      - '8090:8080'
+      - '127.0.0.1:8090:8080'
     environment:
       KAFKA_CLUSTERS_0_NAME: ebc-local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
@@ -281,8 +281,8 @@ services:
       # storageConfigInfo `pathStyleAccess` flag for its own writes.
       MINIO_DOMAIN:        minio
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
     volumes:
       - minio-data:/data
     networks:
@@ -368,8 +368,8 @@ services:
       minio-init:
         condition: service_completed_successfully
     ports:
-      - '8181:8181'
-      - '8182:8182'
+      - '127.0.0.1:8181:8181'
+      - '127.0.0.1:8182:8182'
     environment:
       polaris.persistence.type:                          relational-jdbc
       quarkus.datasource.jdbc.url:                       jdbc:postgresql://polaris-postgres:5432/polaris
@@ -466,7 +466,7 @@ services:
       polaris-catalog-init:
         condition: service_completed_successfully
     ports:
-      - '8080:8080'
+      - '127.0.0.1:8080:8080'
     volumes:
       - ../trino/etc:/etc/trino:ro
       - trino-data:/data/trino
@@ -546,7 +546,7 @@ services:
     container_name: ebc-airflow-webserver
     command: webserver
     ports:
-      - '8085:8080'
+      - '127.0.0.1:8085:8080'
     depends_on:
       postgres-meta:
         condition: service_healthy
