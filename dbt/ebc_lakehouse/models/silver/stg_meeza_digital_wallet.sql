@@ -14,10 +14,10 @@
 WITH source AS (
     SELECT
         _id, wallet_id, event_type, channel, issuing_bank_id,
-        amount_egp, status, event_ts
+        amount_egp, status, CAST(event_ts AS TIMESTAMP(6)) AS event_ts
     FROM {{ source('bronze', 'meeza_digital_wallet_events') }}
     {% if is_incremental() %}
-      WHERE event_ts > (
+      WHERE CAST(event_ts AS TIMESTAMP(6)) > (
         SELECT coalesce(max(event_timestamp), TIMESTAMP '1970-01-01 00:00:00')
                  - INTERVAL '1' HOUR
         FROM {{ this }}

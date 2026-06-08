@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS polaris.bronze.meeza_digital_wallet_events (
     issuing_bank_id  STRING,
     amount_egp       DECIMAL(18,2),
     `status`         STRING,
-    event_ts         TIMESTAMP(3),
+    event_ts         TIMESTAMP_LTZ(3),
     PRIMARY KEY (`_id`) NOT ENFORCED
 ) WITH (
     'format-version'                = '2',
@@ -45,7 +45,7 @@ CREATE TEMPORARY TABLE kafka_wallet_src (
     issuing_bank_id  STRING,
     amount_egp       DECIMAL(18,2),
     `status`         STRING,
-    event_ts         TIMESTAMP(3),
+    event_ts         TIMESTAMP_LTZ(3),
     PRIMARY KEY (`_id`) NOT ENFORCED,
     WATERMARK FOR event_ts AS event_ts - INTERVAL '10' SECOND
 ) WITH (

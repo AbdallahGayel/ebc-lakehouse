@@ -39,13 +39,13 @@ log_section "Governance 1/4 — DataHub backend (MySQL + Elasticsearch)"
 start_service "${GOV_COMPOSE}" datahub-mysql         180
 start_service "${GOV_COMPOSE}" datahub-elasticsearch 300
 
-# ── DataHub GMS ──────────────────────────────────────────────────────────────
-log_section "Governance 2/4 — DataHub GMS (Ebean DDL + ES indices)"
-start_service "${GOV_COMPOSE}" datahub-gms 900
-
 # ── DataHub SystemUpdate (Kafka topics + bootstrap MCPs) ─────────────────────
-log_section "Governance 3/4 — DataHub SystemUpdate"
+log_section "Governance 2/4 — DataHub SystemUpdate"
 run_init "${GOV_COMPOSE}" datahub-upgrade 600
+
+# ── DataHub GMS ──────────────────────────────────────────────────────────────
+log_section "Governance 3/4 — DataHub GMS (Ebean DDL + ES indices)"
+start_service "${GOV_COMPOSE}" datahub-gms 900
 
 dc "${GOV_COMPOSE}" up -d --no-deps datahub-frontend datahub-actions ol-datahub-bridge
 wait_healthy "${GOV_COMPOSE}" datahub-frontend 180

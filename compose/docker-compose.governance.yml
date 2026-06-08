@@ -208,7 +208,9 @@ services:
     container_name: ebc-datahub-upgrade
     command: ['-u', 'SystemUpdate']
     depends_on:
-      datahub-gms:
+      datahub-mysql:
+        condition: service_healthy
+      datahub-elasticsearch:
         condition: service_healthy
     environment:
       EBEAN_DATASOURCE_DRIVER:    com.mysql.cj.jdbc.Driver

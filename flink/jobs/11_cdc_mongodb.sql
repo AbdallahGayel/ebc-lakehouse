@@ -20,7 +20,7 @@ CREATE TEMPORARY TABLE mongo_wallet (
     issuing_bank_id  STRING,
     amount_egp       DECIMAL(18,2),
     `status`         STRING,
-    event_ts         TIMESTAMP(3),
+    event_ts         TIMESTAMP_LTZ(3),
     PRIMARY KEY (`_id`) NOT ENFORCED
 ) WITH (
     'connector'           = 'mongodb-cdc',
@@ -40,7 +40,7 @@ CREATE TEMPORARY TABLE kafka_wallet_sink (
     issuing_bank_id  STRING,
     amount_egp       DECIMAL(18,2),
     `status`         STRING,
-    event_ts         TIMESTAMP(3),
+    event_ts         TIMESTAMP_LTZ(3),
     PRIMARY KEY (`_id`) NOT ENFORCED
 ) WITH (
     'connector'                    = 'upsert-kafka',
