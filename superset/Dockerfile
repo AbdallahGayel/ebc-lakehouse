@@ -7,6 +7,7 @@ USER root
 RUN pip install --no-cache-dir \
         "trino[sqlalchemy]>=0.330.0" \
         "sqlalchemy-trino>=0.5.0" \
+        "psycopg2-binary>=2.9.9" \
     && apt-get update -qq \
     && apt-get install -y --no-install-recommends postgresql-client \
     && apt-get clean \
