@@ -22,7 +22,7 @@ INTERVAL=60 # Sleep time in seconds
 
 while true; do
     TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-    echo -e "${GREEN}[$TIMESTAMP]${NC} Pushing fresh events to Postgres, Mongo, and Cassandra..."
+    echo -e "${GREEN}[$TIMESTAMP]${NC} Pushing fresh events to Postgres, Mongo, and MS SQL Server..."
 
     # 1. PostgreSQL (ACH, Meeza Cards, IPN)
     docker exec -i ebc-postgres-src psql -U ebc_src -d ebc_sources -q -c "
@@ -45,9 +45,11 @@ while true; do
       });
     "
 
-    # 3. Cassandra (ATM Network)
-    # FIX: Single statement execution to prevent cqlsh SyntaxExceptions
-    docker exec -i ebc-cassandra cqlsh -u cassandra -p cassandra -e "INSERT INTO atm_network.atm_sessions (atm_id, session_date, session_id, status, amount_egp, updated_at) VALUES ('ATM-AUTO', toDate(now()), now(), 'APPROVED', 300, toTimestamp(now()));"
+    # 3. MS SQL Server (ATM Network)
+    docker exec -i ebc-mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'EbcAtm_S3cret!' -C -d ebc_atm -Q "
+      INSERT INTO dbo.atm_sessions (atm_id, session_date, session_ts, card_token, issuing_bank_id, txn_type, amount_egp, status, updated_at)
+      VALUES ('ATM-AUTO', CAST(GETDATE() AS DATE), GETDATE(), 'tk_auto', 'CIB', 'WITHDRAWAL', 300, 'APPROVED', GETDATE());
+    "
 
     echo -e "  -> Batch complete. Sleeping for $INTERVAL seconds...\n"
     sleep $INTERVAL
