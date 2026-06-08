@@ -98,7 +98,6 @@ def main() -> None:
                 expose_in_sqllab                  = True,
                 allow_run_async                   = True,
                 allow_dml                         = False,
-                allow_multi_schema_metadata_fetch = False,
                 extra                             = EXTRA,
             ))
             db.session.commit()
